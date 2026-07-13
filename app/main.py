@@ -1,16 +1,20 @@
 from __future__ import annotations
 
 import json
+import logging
 import shutil
 import uuid
 from pathlib import Path
 
 from typing import Optional
 
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks, Body
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks, Body, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from starlette.formparsers import MultiPartParser
 
 from app.config import JOBS_DIR, MAX_UPLOAD_BYTES, TypographyProfile, MAX_IMAGES_PER_JOB, MAX_REFERENCE_PDFS, MAX_ARTICLES_PER_JOB, PAGE_FORMAT_IDS, APP_VERSION
 from app.layout import fonts as font_manager
@@ -18,7 +22,40 @@ from app.layout import grid_templates as grid_tpl
 from app.tasks.worker import process_job, read_status, select_template, rebuild_job, _job_dir
 from app.nlp.image_matcher import parse_mapping_json
 
+logger = logging.getLogger("layoutgenius")
+
+# Starlette по умолчанию режет multipart на 1 МБ — DOCX часто больше → «Failed to fetch» в браузере
+MultiPartParser.max_file_size = MAX_UPLOAD_BYTES
+MultiPartParser.max_part_size = MAX_UPLOAD_BYTES
+
 app = FastAPI(title="LayoutGenius", version=APP_VERSION)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info("%s %s", request.method, request.url.path)
+    try:
+        response = await call_next(request)
+        logger.info("%s %s -> %s", request.method, request.url.path, response.status_code)
+        return response
+    except Exception:
+        logger.exception("Unhandled error on %s %s", request.method, request.url.path)
+        raise
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(_request: Request, exc: RequestValidationError):
+    detail = exc.errors()
+    logger.warning("Validation error: %s", detail)
+    return JSONResponse(status_code=422, content={"detail": detail})
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
@@ -26,6 +63,7 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 @app.on_event("startup")
 def startup():
+    logging.basicConfig(level=logging.INFO)
     font_manager.scan_fonts()
     from app.config import JOB_TTL_HOURS
     from app.tasks.cleanup import cleanup_old_jobs
@@ -119,10 +157,12 @@ async def create_job(
     extra_articles: Optional[list[UploadFile]] = File(None),
     images: Optional[list[UploadFile]] = File(None),
     fonts: Optional[list[UploadFile]] = File(None),
-    margin_top_mm: float = Form(20.0),
-    margin_bottom_mm: float = Form(20.0),
-    margin_left_mm: float = Form(18.0),
-    margin_right_mm: float = Form(18.0),
+    margin_top_mm: float = Form(6.0),
+    margin_bottom_mm: float = Form(7.0),
+    margin_inside_mm: float = Form(8.0),
+    margin_outside_mm: float = Form(10.0),
+    columns_count: int = Form(4),
+    column_gutter_mm: float = Form(3.5),
     bleed_mm: float = Form(3.0),
     color_profile: str = Form("Coated FOGRA39"),
     print_marks: bool = Form(False),
@@ -239,8 +279,10 @@ async def create_job(
     profile = TypographyProfile(
         margin_top_mm=margin_top_mm,
         margin_bottom_mm=margin_bottom_mm,
-        margin_left_mm=margin_left_mm,
-        margin_right_mm=margin_right_mm,
+        margin_inside_mm=margin_inside_mm,
+        margin_outside_mm=margin_outside_mm,
+        columns_count=columns_count,
+        column_gutter_mm=column_gutter_mm,
         bleed_mm=bleed_mm,
         color_profile=color_profile,
         print_marks=print_marks,

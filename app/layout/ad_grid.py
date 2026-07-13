@@ -121,14 +121,15 @@ def scale_preset(preset_id: str, page_w: float, page_h: float,
     if not base:
         return []
     base_w, base_h = 210.0, 297.0
+    base_ml, base_mr, base_mt, base_mb = 8.0, 10.0, 6.0, 7.0
     content_w = page_w - margin_l - margin_r
     content_h = page_h - margin_t - margin_b
-    sx = content_w / (base_w - 36)
-    sy = content_h / (base_h - 40)
+    sx = content_w / (base_w - base_ml - base_mr)
+    sy = content_h / (base_h - base_mt - base_mb)
     out = []
     for s in base["slots"]:
-        x = margin_l + (s["x_mm"] - 18) * sx
-        y = margin_t + (s["y_mm"] - 20) * sy
+        x = margin_l + (s["x_mm"] - base_ml) * sx
+        y = margin_t + (s["y_mm"] - base_mt) * sy
         w = s["width_mm"] * sx
         h = s["height_mm"] * sy
         out.append({

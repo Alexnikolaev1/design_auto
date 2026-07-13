@@ -93,8 +93,8 @@ class LayoutPlan:
     used_ad_slot_indices: list[int] = field(default_factory=list)
 
 
-def _content_area(profile: TypographyProfile) -> Rect:
-    m = profile.margins_pt()
+def _content_area(profile: TypographyProfile, page_index: int = 0) -> Rect:
+    m = profile.margins_pt(page_index)
     pw, ph = profile.page_width_pt(), profile.page_height_pt()
     return Rect(
         x=m["left"], y=m["top"],
@@ -249,11 +249,10 @@ def build_layout(
     profile: TypographyProfile,
     ad_slots: list[AdSlot] | None = None,
 ) -> LayoutPlan:
-    content = _content_area(profile)
+    pw, ph = profile.page_width_pt(), profile.page_height_pt()
     blocks = parsed.blocks
     slot_queue = list(ad_slots or [])
     used_slot_indices: set[int] = set()
-    pw, ph = profile.page_width_pt(), profile.page_height_pt()
 
     pages: list[Page] = []
     chain_counter = 0
@@ -261,10 +260,15 @@ def build_layout(
     image_counter = 0
     column_obstacles: dict[int, list[ColumnObstacle]] = {}
 
+    def content_for(page_index: int) -> Rect:
+        return _content_area(profile, page_index)
+
+    content = content_for(0)
+
     def new_page(drop_cap: bool = False) -> Page:
         nonlocal chain_counter, page_idx, column_obstacles
         column_obstacles = {}
-        cols = _columns_for_page(content, template)
+        cols = _columns_for_page(content_for(page_idx), template)
         for c in cols:
             c.chain_index = chain_counter
             chain_counter += 1
@@ -273,7 +277,12 @@ def build_layout(
         page_idx += 1
         return p
 
+    def sync_content() -> None:
+        nonlocal content
+        content = content_for(cur_page.index)
+
     cur_page = new_page(drop_cap=(template.accent_style == "tint_block"))
+    sync_content()
     col_i = 0
     y_cursor = {i: cur_page.columns[i].rect.y for i in range(len(cur_page.columns))}
     first_body_on_page = True
@@ -292,6 +301,7 @@ def build_layout(
         nonlocal cur_page, col_i, y_cursor, first_body_on_page
         while cur_page.index < target:
             cur_page = new_page()
+            sync_content()
             col_i = 0
             first_body_on_page = True
             y_cursor = {i: cur_page.columns[i].rect.y for i in range(len(cur_page.columns))}
@@ -301,6 +311,7 @@ def build_layout(
         if not page_has_content():
             return
         cur_page = new_page()
+        sync_content()
         col_i = 0
         first_body_on_page = True
         y_cursor = {i: cur_page.columns[i].rect.y for i in range(len(cur_page.columns))}
@@ -331,6 +342,7 @@ def build_layout(
                 if profile.jump_lines and page_has_content():
                     _append_jump_line(prev_page, prev_col, page_idx + 2)
                 cur_page = new_page()
+                sync_content()
                 col_i = 0
                 first_body_on_page = True
                 y_cursor = {i: cur_page.columns[i].rect.y for i in range(len(cur_page.columns))}
@@ -344,6 +356,7 @@ def build_layout(
             if profile.jump_lines and page_has_content():
                 _append_jump_line(prev_page, prev_col, page_idx + 2)
             cur_page = new_page()
+            sync_content()
             col_i = 0
             first_body_on_page = True
             y_cursor = {i: cur_page.columns[i].rect.y for i in range(len(cur_page.columns))}

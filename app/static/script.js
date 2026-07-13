@@ -235,7 +235,8 @@ submitBtn.addEventListener("click", async () => {
   for (const ref of selectedReferences) form.append("references", ref);
 
   const fields = [
-    "margin_top_mm", "margin_bottom_mm", "margin_left_mm", "margin_right_mm",
+    "margin_top_mm", "margin_bottom_mm", "margin_inside_mm", "margin_outside_mm",
+    "columns_count", "column_gutter_mm",
     "bleed_mm", "body_size_override_pt", "font_serif", "font_sans", "font_display",
   ];
   for (const id of fields) form.append(id, val(id));
@@ -262,7 +263,11 @@ submitBtn.addEventListener("click", async () => {
     const resp = await fetch("/api/jobs", { method: "POST", body: form });
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({ detail: "Ошибка запроса" }));
-      throw new Error(err.detail || "Ошибка запроса");
+      const detail = err.detail;
+      const msg = Array.isArray(detail)
+        ? detail.map(d => d.msg || JSON.stringify(d)).join("; ")
+        : (typeof detail === "string" ? detail : (detail || "Ошибка запроса"));
+      throw new Error(msg);
     }
     const data = await resp.json();
     currentJobId = data.job_id;
@@ -270,11 +275,18 @@ submitBtn.addEventListener("click", async () => {
   } catch (e) {
     submitBtn.disabled = false;
     hide(statusSection);
-    showError(e.message);
+    let msg = e.message || "Неизвестная ошибка";
+    if (msg === "Failed to fetch") {
+      msg = "Сервер не ответил на загрузку. Проверьте /api/health, размер файла (до 20 МБ) и что деплой завершён без ошибок.";
+    }
+    showError(msg);
   }
 });
 
-function val(id) { return document.getElementById(id).value; }
+function val(id, fallback = "") {
+  const el = document.getElementById(id);
+  return el ? el.value : fallback;
+}
 function show(el) { el.hidden = false; }
 function hide(el) { el.hidden = true; }
 function showError(msg) { errorText.textContent = msg; show(errorSection); }

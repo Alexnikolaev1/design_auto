@@ -371,7 +371,7 @@ def build_inx(parsed: ParsedDocument, plan: LayoutPlan,
     master_page.set("Self", "Page/uMaster1")
     master_page.set("Name", "A")
     margin_pref = etree.SubElement(master_page, "MarginPreference")
-    m = profile.margins_pt()
+    m = profile.margins_pt(0)
     margin_pref.set("Top", str(round(m["top"], 3)))
     margin_pref.set("Bottom", str(round(m["bottom"], 3)))
     margin_pref.set("Left", str(round(m["left"], 3)))

@@ -28,10 +28,10 @@
   function getMargins() {
     const g = (id, def) => parseFloat(document.getElementById(id)?.value) || def;
     return {
-      top: g("margin_top_mm", 20),
-      bottom: g("margin_bottom_mm", 20),
-      left: g("margin_left_mm", 18),
-      right: g("margin_right_mm", 18),
+      top: g("margin_top_mm", 6),
+      bottom: g("margin_bottom_mm", 7),
+      left: g("margin_inside_mm", 8),
+      right: g("margin_outside_mm", 10),
     };
   }
 
@@ -454,7 +454,8 @@
       btn.addEventListener("click", () => applyPreset(btn.dataset.gridPreset));
     });
 
-    ["page_format", "margin_top_mm", "margin_bottom_mm", "margin_left_mm", "margin_right_mm",
+    ["page_format", "margin_top_mm", "margin_bottom_mm", "margin_inside_mm", "margin_outside_mm",
+     "columns_count", "column_gutter_mm",
      "custom_page_width_mm", "custom_page_height_mm"].forEach(id => {
       document.getElementById(id)?.addEventListener("change", resize);
       document.getElementById(id)?.addEventListener("input", resize);

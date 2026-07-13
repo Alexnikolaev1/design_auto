@@ -28,4 +28,4 @@ EXPOSE 8000
 
 # Railway пробрасывает порт через переменную PORT — используем её,
 # с фолбэком на 8000 для локального запуска.
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips='*' --access-log --log-level info"]

@@ -128,6 +128,14 @@ def _italic_variant(ps: str) -> str:
     return resolved.postscript_name
 
 
+def apply_profile_layout(template: TemplateSpec, profile: TypographyProfile) -> TemplateSpec:
+    """Подставляет колонки и интервал из профиля (как в InDesign)."""
+    t = copy.deepcopy(template)
+    t.columns = profile.columns_count
+    t.gutter_mm = profile.column_gutter_mm
+    return t
+
+
 def apply_user_fonts(template: TemplateSpec, profile: TypographyProfile) -> TemplateSpec:
     """Подставляет пользовательские шрифты в шаблон."""
     t = copy.deepcopy(template)
@@ -199,5 +207,5 @@ def select_templates(word_count: int, image_count: int,
             t.image_strategy = "full_width"
 
     if profile:
-        return [apply_user_fonts(t, profile) for t in picked]
+        return [apply_profile_layout(apply_user_fonts(t, profile), profile) for t in picked]
     return picked

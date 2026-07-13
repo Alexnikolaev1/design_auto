@@ -67,7 +67,6 @@ def _mm_to_pt(v: float) -> float:
 def export_layout_model(plan, image_names: list[str] | None = None) -> dict[str, Any]:
     """JSON-модель для визуального редактора полосы."""
     profile = plan.profile
-    m = profile.margins_pt()
     names = image_names or []
     pages_out = []
     for page in plan.pages:
@@ -106,13 +105,9 @@ def export_layout_model(plan, image_names: list[str] | None = None) -> dict[str,
     return {
         "page_width_mm": round(_pt_to_mm(plan.page_width_pt or profile.page_width_pt()), 2),
         "page_height_mm": round(_pt_to_mm(plan.page_height_pt or profile.page_height_pt()), 2),
-        "margins_mm": {
-            "top": profile.margin_top_mm,
-            "bottom": profile.margin_bottom_mm,
-            "left": profile.margin_left_mm,
-            "right": profile.margin_right_mm,
-        },
+        "margins_mm": profile.margins_mm(0),
         "columns_count": plan.template.columns,
+        "column_gutter_mm": plan.template.gutter_mm,
         "pages": pages_out,
     }
 

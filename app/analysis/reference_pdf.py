@@ -372,8 +372,8 @@ def apply_reference_to_profile(
     if use_reference_margins:
         p.margin_top_mm = ref.margin_top_mm
         p.margin_bottom_mm = ref.margin_bottom_mm
-        p.margin_left_mm = ref.margin_left_mm
-        p.margin_right_mm = ref.margin_right_mm
+        p.margin_inside_mm = ref.margin_left_mm
+        p.margin_outside_mm = ref.margin_right_mm
 
     if p.body_size_override_pt <= 0:
         p.body_size_override_pt = ref.body_size_pt

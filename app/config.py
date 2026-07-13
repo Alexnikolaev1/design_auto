@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 FONTS_DIR = BASE_DIR / "fonts"
@@ -27,7 +27,7 @@ MAX_PREVIEW_PAGES = int(os.environ.get("LG_MAX_PREVIEW_PAGES", "32"))
 PDF_EXPORT_DPI = int(os.environ.get("LG_PDF_DPI", "300"))
 JOB_TTL_HOURS = float(os.environ.get("LG_JOB_TTL_HOURS", "48"))
 
-APP_VERSION = "2.5.1"
+APP_VERSION = "2.5.3"
 
 UNSPLASH_ACCESS_KEY = os.environ.get("UNSPLASH_ACCESS_KEY", "")
 PEXELS_API_KEY = os.environ.get("PEXELS_API_KEY", "")
@@ -58,10 +58,12 @@ LANGUAGES = {
 class TypographyProfile(BaseModel):
     """Профиль типографических настроек, задаваемый пользователем."""
 
-    margin_top_mm: float = 20.0
-    margin_bottom_mm: float = 20.0
-    margin_left_mm: float = 18.0
-    margin_right_mm: float = 18.0
+    margin_top_mm: float = 6.0
+    margin_bottom_mm: float = 7.0
+    margin_inside_mm: float = 8.0
+    margin_outside_mm: float = 10.0
+    columns_count: int = Field(default=4, ge=1, le=12)
+    column_gutter_mm: float = Field(default=3.5, ge=0.0, le=30.0)
     bleed_mm: float = 3.0
     color_profile: str = "Coated FOGRA39"
     print_marks: bool = False
@@ -86,13 +88,37 @@ class TypographyProfile(BaseModel):
     # Опциональная корректировка базового кегля (0 = авто по шаблону)
     body_size_override_pt: float = Field(default=0.0, ge=0.0, le=24.0)
 
-    def margins_pt(self) -> dict[str, float]:
+    @model_validator(mode="before")
+    @classmethod
+    def _migrate_legacy_margins(cls, data):
+        if isinstance(data, dict):
+            if "margin_left_mm" in data and "margin_inside_mm" not in data:
+                data["margin_inside_mm"] = data["margin_left_mm"]
+            if "margin_right_mm" in data and "margin_outside_mm" not in data:
+                data["margin_outside_mm"] = data["margin_right_mm"]
+        return data
+
+    def margins_pt(self, page_index: int = 0) -> dict[str, float]:
+        """InDesign: Inside/Outside → Left/Right (с учётом разворота)."""
+        inside = self.margin_inside_mm * MM_TO_PT
+        outside = self.margin_outside_mm * MM_TO_PT
+        if self.facing_pages and page_index % 2 == 1:
+            left, right = outside, inside
+        else:
+            left, right = inside, outside
         return {
             "top": self.margin_top_mm * MM_TO_PT,
             "bottom": self.margin_bottom_mm * MM_TO_PT,
-            "left": self.margin_left_mm * MM_TO_PT,
-            "right": self.margin_right_mm * MM_TO_PT,
+            "left": left,
+            "right": right,
+            "inside": inside,
+            "outside": outside,
         }
+
+    def margins_mm(self, page_index: int = 0) -> dict[str, float]:
+        pt = self.margins_pt(page_index)
+        inv = 1.0 / MM_TO_PT
+        return {k: round(v * inv, 2) for k, v in pt.items()}
 
     def bleed_pt(self) -> float:
         return self.bleed_mm * MM_TO_PT

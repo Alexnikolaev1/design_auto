@@ -543,7 +543,8 @@ def _build_preflight_report(template_id: str, image_paths: list[Path],
         f"Цветовой профиль (заявлен): {profile.color_profile}",
         f"Язык: {profile.language} ({profile.indesign_language()})",
         f"Поля: top={profile.margin_top_mm}mm bottom={profile.margin_bottom_mm}mm "
-        f"left={profile.margin_left_mm}mm right={profile.margin_right_mm}mm",
+        f"inside={profile.margin_inside_mm}mm outside={profile.margin_outside_mm}mm "
+        f"| колонок={profile.columns_count} gutter={profile.column_gutter_mm}mm",
         f"Формат полосы: {profile.page_format} ({profile.page_width_pt():.0f}×{profile.page_height_pt():.0f} pt)",
         f"Разворотные страницы: {'да' if profile.facing_pages else 'нет'}",
         f"H1 с новой полосы: {'да' if profile.heading_starts_new_page else 'нет'}",
