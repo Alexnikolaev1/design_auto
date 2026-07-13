@@ -6,7 +6,7 @@ import shutil
 import uuid
 from pathlib import Path
 
-from typing import Optional
+from typing import Optional, Union
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks, Body, Request
 from fastapi.responses import FileResponse, JSONResponse
@@ -23,6 +23,29 @@ from app.tasks.worker import process_job, read_status, select_template, rebuild_
 from app.nlp.image_matcher import parse_mapping_json
 
 logger = logging.getLogger("layoutgenius")
+
+UploadFiles = Union[UploadFile, list[UploadFile], None]
+
+
+def _normalize_upload_files(value: UploadFiles) -> list[UploadFile]:
+    """Один файл в multipart приходит как UploadFile, не list — нормализуем."""
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [f for f in value if f and f.filename]
+    return [value] if value.filename else []
+
+
+def _errors_for_json(errors: list[dict]) -> list[dict]:
+    safe = []
+    for err in errors:
+        item = dict(err)
+        inp = item.get("input")
+        if inp is not None and not isinstance(inp, (str, int, float, bool, list, dict)):
+            name = getattr(inp, "filename", None)
+            item["input"] = f"<upload:{name}>" if name else str(type(inp).__name__)
+        safe.append(item)
+    return safe
 
 # Starlette по умолчанию режет multipart на 1 МБ — DOCX часто больше → «Failed to fetch» в браузере
 MultiPartParser.max_file_size = MAX_UPLOAD_BYTES
@@ -53,7 +76,7 @@ async def log_requests(request: Request, call_next):
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(_request: Request, exc: RequestValidationError):
-    detail = exc.errors()
+    detail = _errors_for_json(exc.errors())
     logger.warning("Validation error: %s", detail)
     return JSONResponse(status_code=422, content={"detail": detail})
 
@@ -154,9 +177,9 @@ def list_fonts():
 async def create_job(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
-    extra_articles: Optional[list[UploadFile]] = File(None),
-    images: Optional[list[UploadFile]] = File(None),
-    fonts: Optional[list[UploadFile]] = File(None),
+    extra_articles: UploadFiles = File(None),
+    images: UploadFiles = File(None),
+    fonts: UploadFiles = File(None),
     margin_top_mm: float = Form(6.0),
     margin_bottom_mm: float = Form(7.0),
     margin_inside_mm: float = Form(8.0),
@@ -173,7 +196,7 @@ async def create_job(
     font_sans: str = Form(""),
     font_display: str = Form(""),
     body_size_override_pt: float = Form(0.0),
-    references: Optional[list[UploadFile]] = File(None),
+    references: UploadFiles = File(None),
     mark_advertising: bool = Form(True),
     use_reference_style: bool = Form(True),
     page_format: str = Form("a4"),
@@ -186,6 +209,11 @@ async def create_job(
     custom_page_height_mm: float = Form(0.0),
     ad_grid: str = Form(""),
 ):
+    extra_articles = _normalize_upload_files(extra_articles)
+    images = _normalize_upload_files(images)
+    fonts = _normalize_upload_files(fonts)
+    references = _normalize_upload_files(references)
+
     fname = (file.filename or "").lower()
     if not (fname.endswith(".docx") or fname.endswith(".doc")):
         raise HTTPException(400, "Ожидается файл .doc или .docx")
@@ -206,7 +234,7 @@ async def create_job(
     # Обратная совместимость для старых задач / rebuild
     (d / f"source{ext}").write_bytes(raw)
 
-    for i, art_file in enumerate((extra_articles or [])[:MAX_ARTICLES_PER_JOB - 1]):
+    for i, art_file in enumerate(extra_articles[:MAX_ARTICLES_PER_JOB - 1]):
         if not art_file.filename:
             continue
         aname = art_file.filename.lower()
@@ -223,7 +251,7 @@ async def create_job(
     extra_images: list[Path] = []
     mapping_data: list[dict] | None = None
 
-    for i, img_file in enumerate((images or [])[:MAX_IMAGES_PER_JOB + 2]):
+    for i, img_file in enumerate(images[:MAX_IMAGES_PER_JOB + 2]):
         if not img_file.filename:
             continue
         ext_img = Path(img_file.filename).suffix.lower()
@@ -243,7 +271,7 @@ async def create_job(
 
     job_fonts_dir = d / "uploaded_fonts"
     job_fonts_dir.mkdir(exist_ok=True)
-    for i, font_file in enumerate((fonts or [])[:10]):
+    for i, font_file in enumerate(fonts[:10]):
         if not font_file.filename:
             continue
         ext = Path(font_file.filename).suffix.lower()
@@ -258,7 +286,7 @@ async def create_job(
     reference_pdfs_dir = d / "reference_pdfs"
     reference_pdfs_dir.mkdir(exist_ok=True)
     reference_paths: list[Path] = []
-    for ref_file in (references or [])[:MAX_REFERENCE_PDFS]:
+    for ref_file in references[:MAX_REFERENCE_PDFS]:
         if not ref_file.filename:
             continue
         if not ref_file.filename.lower().endswith(".pdf"):
@@ -312,7 +340,7 @@ async def create_job(
         ad_grid or None,
     )
     article_total = 1 + len([
-        a for a in (extra_articles or [])
+        a for a in extra_articles
         if a.filename and (a.filename.lower().endswith(".docx") or a.filename.lower().endswith(".doc"))
     ])
     return {"job_id": job_id, "status": "queued", "article_count": min(article_total, MAX_ARTICLES_PER_JOB)}
