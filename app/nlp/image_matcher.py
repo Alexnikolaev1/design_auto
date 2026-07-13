@@ -21,6 +21,7 @@ from pathlib import Path
 from app.nlp.keywords import extract_keywords
 from app.parser.docx_parser import Block, ExtractedImage, Run, ParsedDocument
 from app.layout.image_roles import classify_image
+from app.layout.ad_units import parse_ad_marker, resolve_ad_size_mm, AD_MARKER_RE
 from app.util.upload_files import build_filename_index, normalize_name_key, resolve_upload_path
 
 IMAGE_MARKER_RE = re.compile(
