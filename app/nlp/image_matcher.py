@@ -21,9 +21,7 @@ from pathlib import Path
 from app.nlp.keywords import extract_keywords
 from app.parser.docx_parser import Block, ExtractedImage, Run, ParsedDocument
 from app.layout.image_roles import classify_image
-from app.layout.ad_units import (
-    parse_ad_marker, resolve_ad_size_mm, AD_MARKER_RE,
-)
+from app.util.upload_files import build_filename_index, normalize_name_key, resolve_upload_path
 
 IMAGE_MARKER_RE = re.compile(
     r"\[(?:IMAGE|ИЛЛЮСТРАЦИЯ|РИСУНОК)\s*:\s*([^\]]+\.(?:jpg|jpeg|png|webp|gif|tif|tiff))\s*\]",
@@ -83,7 +81,7 @@ def _tokenize(text: str) -> set[str]:
 
 
 def _normalize_filename(name: str) -> str:
-    return Path(name).name.lower()
+    return normalize_name_key(name)
 
 
 def _build_sections(blocks: list[Block]) -> list[DocumentSection]:
@@ -223,19 +221,16 @@ def _extract_markers_from_blocks(blocks: list[Block], available_files: dict[str,
             out.append(Block(kind=block.kind, level=block.level, runs=[Run(text=clean_text)]))
 
         for marker_file, w_mm, h_mm, area in ad_markers:
-            key = _normalize_filename(marker_file)
-            path = available_files.get(key)
-            if not path:
-                for k, p in available_files.items():
-                    if k.endswith(key) or key.endswith(k):
-                        path = p
-                        break
+            path = resolve_upload_path(marker_file, available_files)
             if not path:
                 continue
-            img_idx = _register_image(
+            try:
+                img_idx = _register_image(
                 path, images, source="marker", forced_role="ad",
                 width_mm=w_mm, height_mm=h_mm, area_cm2=area,
-            )
+                )
+            except FileNotFoundError:
+                continue
             rw, rh = images[img_idx].width_mm, images[img_idx].height_mm
             placements.append(ImagePlacement(
                 image_index=img_idx,
@@ -252,16 +247,13 @@ def _extract_markers_from_blocks(blocks: list[Block], available_files: dict[str,
             ))
 
         for marker_file in banner_markers:
-            key = _normalize_filename(marker_file)
-            path = available_files.get(key)
-            if not path:
-                for k, p in available_files.items():
-                    if k.endswith(key) or key.endswith(k):
-                        path = p
-                        break
+            path = resolve_upload_path(marker_file, available_files)
             if not path:
                 continue
-            img_idx = _register_image(path, images, source="marker", forced_role="banner")
+            try:
+                img_idx = _register_image(path, images, source="marker", forced_role="banner")
+            except FileNotFoundError:
+                continue
             placements.append(ImagePlacement(
                 image_index=img_idx,
                 filename=path.name,
@@ -273,17 +265,13 @@ def _extract_markers_from_blocks(blocks: list[Block], available_files: dict[str,
             out.append(Block(kind="image", level=0, runs=[], image_index=img_idx, image_role="banner"))
 
         for marker_file in markers:
-            key = _normalize_filename(marker_file)
-            path = available_files.get(key)
-            if not path:
-                for k, p in available_files.items():
-                    if k.endswith(key) or key.endswith(k):
-                        path = p
-                        key = k
-                        break
+            path = resolve_upload_path(marker_file, available_files)
             if not path:
                 continue
-            img_idx = _register_image(path, images, source="marker")
+            try:
+                img_idx = _register_image(path, images, source="marker")
+            except FileNotFoundError:
+                continue
             role = images[img_idx].role
             placements.append(ImagePlacement(
                 image_index=img_idx,
@@ -307,6 +295,8 @@ def _nearest_heading(blocks: list[Block]) -> str:
 def _register_image(path: Path, images: list[ExtractedImage], source: str,
                     forced_role: str = "", width_mm: float | None = None,
                     height_mm: float | None = None, area_cm2: float | None = None) -> int:
+    if not path.is_file():
+        raise FileNotFoundError(path)
     for i, img in enumerate(images):
         if img.path.resolve() == path.resolve():
             return i
@@ -343,6 +333,7 @@ def match_uploaded_images(
     parsed: ParsedDocument,
     uploaded_paths: list[Path],
     mapping_data: list[dict] | None = None,
+    upload_dir: Path | None = None,
 ) -> ImageMatchResult:
     """
     Встраивает загруженные иллюстрации в поток блоков документа.
@@ -353,7 +344,7 @@ def match_uploaded_images(
     placements: list[ImagePlacement] = []
     blocks = _attach_captions(blocks)
 
-    available: dict[str, Path] = {_normalize_filename(p.name): p for p in uploaded_paths}
+    available = build_filename_index(uploaded_paths, upload_dir)
     blocks = _extract_markers_from_blocks(blocks, available, images, placements)
 
     used_paths: set[Path] = {img.path.resolve() for img in images}
@@ -364,8 +355,7 @@ def match_uploaded_images(
     if mapping_data:
         for entry in mapping_data:
             fname = entry.get("file") or entry.get("filename") or ""
-            key = _normalize_filename(fname)
-            path = available.get(key)
+            path = resolve_upload_path(fname, available)
             if not path:
                 continue
             if path.resolve() in used_paths:
@@ -414,7 +404,6 @@ def match_uploaded_images(
         pending = [p for p in pending if p.resolve() not in used_paths]
 
     for path in pending:
-        key = _normalize_filename(path.name)
         best_section: DocumentSection | None = None
         best_score = 0.0
         for si, section in enumerate(sections):
@@ -437,7 +426,10 @@ def match_uploaded_images(
             anchor = _section_at(sections, insert_at).title
             reason = "порядок загрузки → раздел по очереди"
 
-        img_idx = _register_image(path, images, source="upload")
+        try:
+            img_idx = _register_image(path, images, source="upload")
+        except FileNotFoundError:
+            continue
         role = images[img_idx].role
         rw, rh = images[img_idx].width_mm, images[img_idx].height_mm
         if role == "banner":

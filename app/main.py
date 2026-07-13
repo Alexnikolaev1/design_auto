@@ -21,6 +21,7 @@ from app.layout import fonts as font_manager
 from app.layout import grid_templates as grid_tpl
 from app.tasks.worker import process_job, read_status, select_template, rebuild_job, _job_dir
 from app.nlp.image_matcher import parse_mapping_json
+from app.util.upload_files import save_uploaded_image, write_upload_manifest
 
 logger = logging.getLogger("layoutgenius")
 
@@ -250,8 +251,10 @@ async def create_job(
     uploaded_images_dir.mkdir(exist_ok=True)
     extra_images: list[Path] = []
     mapping_data: list[dict] | None = None
+    upload_manifest: list[dict] = []
+    upload_idx = 0
 
-    for i, img_file in enumerate(images[:MAX_IMAGES_PER_JOB + 2]):
+    for img_file in images[:MAX_IMAGES_PER_JOB + 2]:
         if not img_file.filename:
             continue
         ext_img = Path(img_file.filename).suffix.lower()
@@ -265,9 +268,13 @@ async def create_job(
             continue
         if ext_img not in (".jpg", ".jpeg", ".png", ".webp", ".gif", ".tif", ".tiff"):
             continue
-        dest = uploaded_images_dir / f"{Path(img_file.filename).name}"
-        dest.write_bytes(content)
-        extra_images.append(dest)
+        entry = save_uploaded_image(uploaded_images_dir, img_file.filename, content, upload_idx)
+        upload_idx += 1
+        upload_manifest.append(entry)
+        extra_images.append(uploaded_images_dir / entry["stored"])
+
+    if upload_manifest:
+        write_upload_manifest(uploaded_images_dir, upload_manifest)
 
     job_fonts_dir = d / "uploaded_fonts"
     job_fonts_dir.mkdir(exist_ok=True)

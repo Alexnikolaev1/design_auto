@@ -32,7 +32,9 @@ from app.layout.overrides import (
 )
 from app.inx.print_checklist import build_print_checklist, format_checklist_text, CheckItem
 from app.export.pdf_export import export_print_pdf, pdf_page_count
-from app.layout.quality import compute_layout_quality
+from app.util.upload_files import (
+    collect_uploaded_images, ingest_into_extracted, resolve_image_on_disk,
+)
 
 
 def _job_dir(job_id: str) -> Path:
@@ -155,10 +157,7 @@ def rebuild_job(job_id: str, mapping_data: list[dict] | None = None,
         raise FileNotFoundError("Исходный документ не найден")
 
     uploaded_dir = d / "uploaded_images"
-    extra_images = [
-        p for p in uploaded_dir.iterdir()
-        if p.suffix.lower() in (".jpg", ".jpeg", ".png", ".webp", ".gif", ".tif", ".tiff")
-    ] if uploaded_dir.is_dir() else []
+    extra_images = collect_uploaded_images(uploaded_dir) if uploaded_dir.is_dir() else []
 
     fonts_dir = d / "uploaded_fonts"
     job_fonts = fonts_dir if fonts_dir.is_dir() and any(fonts_dir.iterdir()) else None
@@ -228,22 +227,22 @@ def _execute_pipeline(job_id: str, article_paths: list[Path], profile_dict: dict
         )
         keywords = extract_keywords(parsed.full_text)
 
+        sources = list(extra_image_paths) if extra_image_paths else collect_uploaded_images(d / "uploaded_images")
         uploaded: list[Path] = []
-        if extra_image_paths:
-            for p in extra_image_paths:
-                if p.suffix.lower() == ".json":
-                    continue
-                if p.exists():
-                    dest = images_dir / p.name
-                    if p.resolve() != dest.resolve():
-                        shutil.copy2(p, dest)
-                    uploaded.append(dest)
+        for i, p in enumerate(sources):
+            ingested = ingest_into_extracted(p, images_dir, i)
+            if ingested:
+                uploaded.append(ingested)
 
-        match_result = match_uploaded_images(parsed, uploaded, mapping_data)
+        match_result = match_uploaded_images(parsed, uploaded, mapping_data, upload_dir=d / "uploaded_images")
         parsed = ParsedDocument(
             blocks=match_result.blocks, images=match_result.images,
             footnotes=parsed.footnotes,
         )
+        for img in parsed.images:
+            resolved = resolve_image_on_disk(img.path, d)
+            if resolved.is_file():
+                img.path = resolved
         image_paths = [img.path for img in parsed.images]
         placements_report = [_placement_to_dict(p) for p in match_result.placements]
         banner_count = sum(1 for img in parsed.images if img.role == "banner")
