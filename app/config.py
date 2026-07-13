@@ -27,7 +27,7 @@ MAX_PREVIEW_PAGES = int(os.environ.get("LG_MAX_PREVIEW_PAGES", "32"))
 PDF_EXPORT_DPI = int(os.environ.get("LG_PDF_DPI", "300"))
 JOB_TTL_HOURS = float(os.environ.get("LG_JOB_TTL_HOURS", "48"))
 
-APP_VERSION = "2.5.6"
+APP_VERSION = "2.5.7"
 
 UNSPLASH_ACCESS_KEY = os.environ.get("UNSPLASH_ACCESS_KEY", "")
 PEXELS_API_KEY = os.environ.get("PEXELS_API_KEY", "")

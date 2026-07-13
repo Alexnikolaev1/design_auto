@@ -32,6 +32,7 @@ from app.layout.overrides import (
 )
 from app.inx.print_checklist import build_print_checklist, format_checklist_text, CheckItem
 from app.export.pdf_export import export_print_pdf, pdf_page_count
+from app.layout.quality import compute_layout_quality
 from app.util.upload_files import (
     collect_uploaded_images, ingest_into_extracted, resolve_image_on_disk,
 )
