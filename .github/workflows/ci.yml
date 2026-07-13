@@ -1,0 +1,53 @@
+name: CI — INX Smoke & Tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio
+
+      - name: Run tests (includes INX smoke)
+        run: python -m pytest tests/ -q --tb=short
+
+      - name: Generate sample INX and smoke-check
+        run: |
+          python -c "
+          from app.config import TypographyProfile
+          from app.layout.engine import build_layout
+          from app.layout.templates import TEMPLATES
+          from app.inx.generator import build_inx
+          from app.inx.smoke import smoke_test_inx
+          from app.export.pdf_export import export_print_pdf
+          from app.parser.docx_parser import ParsedDocument, Block, Run
+          import tempfile
+          from pathlib import Path
+          blocks = [
+              Block(kind='heading', level=1, runs=[Run(text='CI Smoke')]),
+              Block(kind='body', runs=[Run(text='Тестовый текст для проверки переносов и кириллицы.')]),
+          ]
+          p = TypographyProfile(hyphenation=True, language='ru-RU')
+          plan = build_layout(ParsedDocument(blocks=blocks, images=[]), TEMPLATES[0], p)
+          inx = build_inx(ParsedDocument(blocks=blocks, images=[]), plan, [])
+          r = smoke_test_inx(inx, p.page_width_pt(), p.page_height_pt())
+          assert r.passed, r.errors
+          with tempfile.TemporaryDirectory() as d:
+              pdf = Path(d) / 't.pdf'
+              export_print_pdf(plan, [], pdf, dpi=72)
+              assert pdf.exists()
+          print('INX smoke + PDF OK:', r.stats)
+          "

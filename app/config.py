@@ -1,0 +1,135 @@
+"""
+Конфигурация LayoutGenius.
+
+Все параметры читаются из переменных окружения (для Railway) с разумными
+значениями по умолчанию для локального запуска.
+"""
+from __future__ import annotations
+
+import os
+from pathlib import Path
+
+from pydantic import BaseModel, Field
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+FONTS_DIR = BASE_DIR / "fonts"
+JOBS_DIR = Path(os.environ.get("LG_JOBS_DIR", "/tmp/layoutgenius_jobs"))
+JOBS_DIR.mkdir(parents=True, exist_ok=True)
+GRID_TEMPLATES_DIR = Path(os.environ.get("LG_GRID_TEMPLATES_DIR", str(JOBS_DIR.parent / "grid_templates")))
+GRID_TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
+
+MAX_UPLOAD_MB = int(os.environ.get("LG_MAX_UPLOAD_MB", "20"))
+MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
+MAX_IMAGES_PER_JOB = 12
+MAX_ARTICLES_PER_JOB = 8
+MAX_REFERENCE_PDFS = 3
+MAX_PREVIEW_PAGES = int(os.environ.get("LG_MAX_PREVIEW_PAGES", "32"))
+PDF_EXPORT_DPI = int(os.environ.get("LG_PDF_DPI", "300"))
+JOB_TTL_HOURS = float(os.environ.get("LG_JOB_TTL_HOURS", "48"))
+
+APP_VERSION = "2.5.1"
+
+UNSPLASH_ACCESS_KEY = os.environ.get("UNSPLASH_ACCESS_KEY", "")
+PEXELS_API_KEY = os.environ.get("PEXELS_API_KEY", "")
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-me")
+
+MM_TO_PT = 72.0 / 25.4
+A4_WIDTH_PT = 210 * MM_TO_PT
+A4_HEIGHT_PT = 297 * MM_TO_PT
+
+PAGE_FORMAT_IDS = ("a4", "tabloid", "newspaper_broadsheet", "custom")
+
+COLOR_PROFILES = [
+    "Coated FOGRA39",
+    "Uncoated FOGRA29",
+    "US Web Coated SWOP v2",
+    "Japan Color 2001 Coated",
+    "sRGB IEC61966-2.1 (для digital)",
+]
+
+LANGUAGES = {
+    "ru-RU": "Russian",
+    "en-US": "English: USA",
+    "de-DE": "German",
+    "fr-FR": "French",
+}
+
+
+class TypographyProfile(BaseModel):
+    """Профиль типографических настроек, задаваемый пользователем."""
+
+    margin_top_mm: float = 20.0
+    margin_bottom_mm: float = 20.0
+    margin_left_mm: float = 18.0
+    margin_right_mm: float = 18.0
+    bleed_mm: float = 3.0
+    color_profile: str = "Coated FOGRA39"
+    print_marks: bool = False
+    language: str = "ru-RU"
+    hyphenation: bool = True
+    auto_stock_images: bool = True
+    mark_advertising: bool = True  # пометка «Реклама» у рекламных модулей (требование для СМИ)
+    page_format: str = "a4"  # a4 | tabloid | newspaper_broadsheet | custom
+    facing_pages: bool = False
+    heading_starts_new_page: bool = False  # H1 с новой полосы (газетные выпуски)
+    jump_lines: bool = True  # «Продолжение на стр. N» при переносе на следующую полосу
+    smart_crop: bool = True  # умное кадрирование фото (фокус / горизонт)
+    pdf_vector_export: bool = True  # векторный PDF (редактируемый текст)
+    custom_page_width_mm: float = Field(default=0.0, ge=0.0, le=600.0)
+    custom_page_height_mm: float = Field(default=0.0, ge=0.0, le=900.0)
+
+    # Предпочтительные шрифты (PostScript-имена из каталога /fonts или загруженные)
+    font_serif: str = ""
+    font_sans: str = ""
+    font_display: str = ""
+
+    # Опциональная корректировка базового кегля (0 = авто по шаблону)
+    body_size_override_pt: float = Field(default=0.0, ge=0.0, le=24.0)
+
+    def margins_pt(self) -> dict[str, float]:
+        return {
+            "top": self.margin_top_mm * MM_TO_PT,
+            "bottom": self.margin_bottom_mm * MM_TO_PT,
+            "left": self.margin_left_mm * MM_TO_PT,
+            "right": self.margin_right_mm * MM_TO_PT,
+        }
+
+    def bleed_pt(self) -> float:
+        return self.bleed_mm * MM_TO_PT
+
+    def page_width_pt(self) -> float:
+        from app.layout.page_formats import get_page_format
+        if self.page_format == "custom" and self.custom_page_width_mm > 0:
+            return self.custom_page_width_mm * MM_TO_PT
+        return get_page_format(self.page_format).width_pt
+
+    def page_height_pt(self) -> float:
+        from app.layout.page_formats import get_page_format
+        if self.page_format == "custom" and self.custom_page_height_mm > 0:
+            return self.custom_page_height_mm * MM_TO_PT
+        return get_page_format(self.page_format).height_pt
+
+    def page_size_mm(self) -> tuple[float, float]:
+        return self.page_width_pt() / MM_TO_PT, self.page_height_pt() / MM_TO_PT
+
+    def indesign_language(self) -> str:
+        return LANGUAGES.get(self.language, "Russian")
+
+
+# Каталог ожидаемых имён файлов (обратная совместимость)
+FONT_CATALOG: dict[str, str] = {
+    "PTSerif-Regular": "PTSerif-Regular.ttf",
+    "PTSerif-Bold": "PTSerif-Bold.ttf",
+    "PTSerif-Italic": "PTSerif-Italic.ttf",
+    "PTSans-Regular": "PTSans-Regular.ttf",
+    "PTSans-Bold": "PTSans-Bold.ttf",
+    "Montserrat-Regular": "Montserrat-Regular.ttf",
+    "Montserrat-Bold": "Montserrat-Bold.ttf",
+}
+
+FONT_FALLBACK_SYSTEM_PATHS = [
+    "/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+]

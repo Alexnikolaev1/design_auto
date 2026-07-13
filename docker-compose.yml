@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  layoutgenius:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - UNSPLASH_ACCESS_KEY=${UNSPLASH_ACCESS_KEY:-}
+      - PEXELS_API_KEY=${PEXELS_API_KEY:-}
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-change-me}
+      - LG_MAX_UPLOAD_MB=20
+    volumes:
+      - ./fonts:/srv/app/fonts:ro
+      - lg_jobs:/tmp/layoutgenius_jobs
+
+volumes:
+  lg_jobs:

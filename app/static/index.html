@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LayoutGenius — авто-вёрстка в InDesign CS3</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="hero">
+  <div class="hero-inner">
+    <div class="logo-mark">LG</div>
+    <div>
+      <h1>LayoutGenius</h1>
+      <p class="tagline">Профессиональная вёрстка DOC/DOCX → Adobe InDesign CS3 (INX). Пять вариантов макета — выберите лучший.</p>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <section id="upload-section" class="panel">
+    <h2 class="section-title">1. Исходные материалы</h2>
+
+    <div class="upload-grid">
+      <div class="upload-card">
+        <div id="docDropzone" class="dropzone" data-type="doc">
+          <div class="dz-icon">📄</div>
+          <p><strong>Текстовый документ</strong></p>
+          <p class="hint">Перетащите .doc / .docx или нажмите для выбора</p>
+          <input type="file" id="fileInput" accept=".doc,.docx" hidden>
+        </div>
+        <div id="fileName" class="file-badge" hidden></div>
+        <div id="articlesDropzone" class="dropzone dropzone-secondary" data-type="articles">
+          <div class="dz-icon">📰</div>
+          <p><strong>Дополнительные статьи выпуска</strong> <span class="optional">(необязательно)</span></p>
+          <p class="hint">Ещё .doc / .docx — объединяются в один номер (до 8 материалов)</p>
+          <input type="file" id="articlesInput" accept=".doc,.docx" multiple hidden>
+        </div>
+        <div id="articlesList" class="file-list"></div>
+      </div>
+
+      <div class="upload-card">
+        <div id="imgDropzone" class="dropzone" data-type="img">
+          <div class="dz-icon">🖼</div>
+          <p><strong>Иллюстрации</strong> <span class="optional">(необязательно)</span></p>
+          <p class="hint">JPG, PNG + опционально mapping.json</p>
+          <p class="hint-small">Реклама: <code>reklama_50cm2.jpg</code> или <code>[РЕКЛАМА: ad.jpg 70x50mm]</code></p>
+          <p class="hint-small">Баннер на всю полосу: <code>[BANNER: promo.jpg]</code></p>
+          <input type="file" id="imgInput" accept="image/*,.json" multiple hidden>
+        </div>
+        <div id="imgList" class="file-list"></div>
+      </div>
+
+      <div class="upload-card">
+        <div id="refDropzone" class="dropzone" data-type="ref">
+          <div class="dz-icon">📑</div>
+          <p><strong>Примеры вёрстки (PDF)</strong> <span class="optional">(необязательно)</span></p>
+          <p class="hint">До 3 PDF — готовые страницы вашей типографии</p>
+          <p class="hint-small">PDF-референс: извлекает колонки, поля, рекламные слоты и формат полосы</p>
+          <input type="file" id="refInput" accept=".pdf" multiple hidden>
+        </div>
+        <div id="refList" class="file-list"></div>
+      </div>
+
+      <div class="upload-card">
+        <div id="fontDropzone" class="dropzone" data-type="font">
+          <div class="dz-icon">🔤</div>
+          <p><strong>Свои шрифты</strong> <span class="optional">(необязательно)</span></p>
+          <p class="hint">TTF/OTF — или используйте папку <code>fonts/</code></p>
+          <input type="file" id="fontInput" accept=".ttf,.otf" multiple hidden>
+        </div>
+        <div id="fontList" class="file-list"></div>
+      </div>
+    </div>
+
+    <details id="profileDetails" class="settings-panel" open>
+      <summary>2. Настройки типографики</summary>
+
+      <div class="settings-tabs">
+        <button type="button" class="tab active" data-tab="margins">Поля и печать</button>
+        <button type="button" class="tab" data-tab="adgrid">Рекламная сетка</button>
+        <button type="button" class="tab" data-tab="fonts">Шрифты</button>
+        <button type="button" class="tab" data-tab="advanced">Дополнительно</button>
+      </div>
+
+      <div class="tab-content active" id="tab-margins">
+        <div class="profile-grid">
+          <label>Поле сверху, мм <input type="number" id="margin_top_mm" value="20" step="0.5" min="5" max="60"></label>
+          <label>Поле снизу, мм <input type="number" id="margin_bottom_mm" value="20" step="0.5" min="5" max="60"></label>
+          <label>Поле слева, мм <input type="number" id="margin_left_mm" value="18" step="0.5" min="5" max="60"></label>
+          <label>Поле справа, мм <input type="number" id="margin_right_mm" value="18" step="0.5" min="5" max="60"></label>
+          <label>Вылет (bleed), мм <input type="number" id="bleed_mm" value="3" step="0.5" min="0" max="15"></label>
+          <label>Цветовой профиль
+            <select id="color_profile">
+              <option>Coated FOGRA39</option>
+              <option>Uncoated FOGRA29</option>
+              <option>US Web Coated SWOP v2</option>
+              <option>Japan Color 2001 Coated</option>
+              <option>sRGB IEC61966-2.1 (для digital)</option>
+            </select>
+          </label>
+          <label>Формат полосы
+            <select id="page_format">
+              <option value="a4">A4 (210×297 мм)</option>
+              <option value="tabloid">Таблоид (280×430 мм)</option>
+              <option value="newspaper_broadsheet">Газета (315×470 мм)</option>
+              <option value="custom">Свой формат…</option>
+            </select>
+          </label>
+          <div id="customSizeRow" class="custom-size-row" hidden>
+            <label>Ширина, мм <input type="number" id="custom_page_width_mm" value="260" step="1" min="100" max="600"></label>
+            <label>Высота, мм <input type="number" id="custom_page_height_mm" value="400" step="1" min="100" max="900"></label>
+          </div>
+          <label class="checkbox"><input type="checkbox" id="facing_pages"> Разворотные страницы (газетный блок)</label>
+          <label class="checkbox"><input type="checkbox" id="heading_starts_new_page"> Заголовок H1 с новой полосы</label>
+          <label class="checkbox"><input type="checkbox" id="print_marks"> Печатные метки (обрез, приводка, шкалы)</label>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-adgrid">
+        <p class="tab-hint">Нарисуйте слоты мышью. Перетащите файл картинки на слот или выберите в списке. Зелёный = файл назначен.</p>
+        <div id="adGridImageChips" class="img-chips-row"></div>
+        <div class="grid-template-bar">
+          <button type="button" id="gridSaveTemplate" class="btn-preset">💾 Сохранить шаблон</button>
+          <select id="gridServerTemplateSelect"><option value="">— серверный шаблон —</option></select>
+          <button type="button" id="gridLoadServerTemplate" class="btn-preset">Загрузить с сервера</button>
+          <select id="gridTemplateSelect"><option value="">— локальный шаблон —</option></select>
+          <button type="button" id="gridLoadTemplate" class="btn-preset">Локально</button>
+        </div>
+        <div id="adGridPageTabs" class="grid-page-tabs"></div>
+        <div class="grid-editor-wrap">
+          <canvas id="adGridCanvas" class="ad-grid-canvas"></canvas>
+          <div class="grid-editor-side">
+            <p class="grid-side-title">Пресеты</p>
+            <div class="preset-btns">
+              <button type="button" class="btn-preset" data-grid-preset="right_column">Правая колонка</button>
+              <button type="button" class="btn-preset" data-grid-preset="top_banner">Верхний баннер</button>
+              <button type="button" class="btn-preset" data-grid-preset="three_bottom">3 внизу</button>
+              <button type="button" class="btn-preset" data-grid-preset="grid_2x2">Сетка 2×2</button>
+              <button type="button" class="btn-preset" data-grid-preset="newspaper_mix">Газетный микс</button>
+              <button type="button" class="btn-preset" data-grid-preset="issue_spread">Выпуск 2 полосы</button>
+            </div>
+            <p class="grid-side-title">Слоты <button type="button" id="adGridClear" class="btn-link">очистить</button></p>
+            <ul id="adGridSlotList" class="ad-slot-list"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-fonts">
+        <p class="tab-hint">Укажите 2–3 основных шрифта. Если не выбрано — используются шаблонные (PT Serif / PT Sans / Montserrat) или системные.</p>
+        <div class="profile-grid">
+          <label>Антиква (serif)
+            <select id="font_serif"><option value="">— авто —</option></select>
+          </label>
+          <label>Гротеск (sans)
+            <select id="font_sans"><option value="">— авто —</option></select>
+          </label>
+          <label>Акцентный (display)
+            <select id="font_display"><option value="">— авто —</option></select>
+          </label>
+          <label>Базовый кегль, pt <span class="optional">0 = авто</span>
+            <input type="number" id="body_size_override_pt" value="0" step="0.5" min="0" max="18">
+          </label>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-advanced">
+        <div class="profile-grid">
+          <label>Язык текста
+            <select id="language">
+              <option value="ru-RU">Русский</option>
+              <option value="en-US">English (US)</option>
+              <option value="de-DE">Deutsch</option>
+              <option value="fr-FR">Français</option>
+            </select>
+          </label>
+          <label class="checkbox"><input type="checkbox" id="hyphenation" checked> Автоматические переносы</label>
+          <label class="checkbox"><input type="checkbox" id="auto_stock_images" checked> Подбирать стоковые фото, если мало иллюстраций</label>
+          <label class="checkbox"><input type="checkbox" id="mark_advertising" checked> Пометка «Реклама» у рекламных модулей</label>
+          <label class="checkbox"><input type="checkbox" id="use_reference_style" checked> Подстраивать поля и кегль под PDF-референсы</label>
+          <label class="checkbox"><input type="checkbox" id="jump_lines" checked> Продолжение на след. полосе (jump lines)</label>
+          <label class="checkbox"><input type="checkbox" id="smart_crop" checked> Смарт-кадрирование фото (фокус / горизонт)</label>
+          <label class="checkbox"><input type="checkbox" id="pdf_vector_export" checked> Векторный PDF (редактируемый текст)</label>
+        </div>
+      </div>
+    </details>
+
+    <button id="submitBtn" class="primary-btn" disabled>
+      <span class="btn-label">Сгенерировать 5 вариантов вёрстки</span>
+    </button>
+  </section>
+
+  <section id="status-section" class="panel status-panel" hidden>
+    <div class="status-inner">
+      <div class="spinner"></div>
+      <div>
+        <p id="statusText">Обработка...</p>
+        <div class="progress-track"><div id="progressFill" class="progress-fill"></div></div>
+        <p id="statusDetail" class="status-detail"></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="outline-section" class="panel outline-panel" hidden>
+    <h2 class="section-title">Структура документа</h2>
+    <ul id="outlineList" class="outline-list"></ul>
+  </section>
+
+  <section id="reference-section" class="panel reference-panel" hidden>
+    <h2 class="section-title">Анализ PDF-референсов</h2>
+    <p id="referenceSummary" class="reference-summary"></p>
+    <p id="referencePreferred" class="reference-preferred"></p>
+  </section>
+
+  <section id="placements-section" class="panel placements-panel" hidden>
+    <h2 class="section-title">Привязка иллюстраций к тексту</h2>
+    <p class="tab-hint">Система автоматически сопоставила картинки с разделами. Скачайте <code>mapping.json</code>, отредактируйте при необходимости и загрузите вместе с картинками при следующем запуске.</p>
+    <ul id="placementsList" class="placements-list"></ul>
+    <div class="placements-actions">
+      <button type="button" id="downloadMappingBtn" class="btn btn-secondary" hidden>Скачать mapping.json</button>
+      <button type="button" id="rebuildBtn" class="btn btn-primary" hidden>Пересобрать с правками</button>
+    </div>
+  </section>
+
+  <section id="results-section" class="panel" hidden>
+    <div class="results-header">
+      <h2 class="section-title">3. Выберите вариант вёрстки</h2>
+      <p id="resultsMeta" class="results-meta"></p>
+      <div id="issueArticles" class="file-list" hidden></div>
+      <button type="button" id="compareBtn" class="btn btn-secondary" hidden>Сравнить варианты</button>
+    </div>
+    <div id="results-grid" class="results-grid"></div>
+  </section>
+
+  <section id="error-section" class="error-box" hidden>
+    <strong>Ошибка</strong>
+    <p id="errorText"></p>
+  </section>
+
+  <div id="previewModal" class="modal" hidden>
+    <div class="modal-backdrop"></div>
+    <div class="modal-content preview-modal">
+      <button type="button" class="modal-close" id="previewClose">×</button>
+      <div class="preview-modal-header">
+        <h3 id="previewModalTitle">Просмотр макета</h3>
+        <span id="previewPageLabel" class="preview-page-label">Стр. 1</span>
+      </div>
+      <div class="preview-modal-body">
+        <button type="button" class="carousel-btn prev" id="previewPrev">‹</button>
+        <img id="previewModalImg" alt="Превью страницы">
+        <button type="button" class="carousel-btn next" id="previewNext">›</button>
+      </div>
+      <div id="previewThumbs" class="preview-thumbs"></div>
+    </div>
+  </div>
+
+  <div id="spreadEditorModal" class="modal" hidden>
+    <div class="modal-backdrop"></div>
+    <div class="modal-content spread-editor-modal">
+      <button type="button" class="modal-close" id="spreadEditorClose">×</button>
+      <div class="spread-editor-header">
+        <h3 id="spreadEditorTitle">Редактор полосы</h3>
+        <label>Полоса <select id="spreadEditorPage"></select></label>
+      </div>
+      <p class="tab-hint">Перетащите фрейм или потяните синий угол для изменения размера. Сохранить → пересборка INX.</p>
+      <div class="spread-canvas-wrap">
+        <canvas id="spreadEditorCanvas" class="spread-editor-canvas"></canvas>
+      </div>
+      <div class="spread-editor-actions">
+        <button type="button" id="spreadEditorSave" class="btn btn-primary">Сохранить и пересобрать</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="compareModal" class="modal" hidden>
+    <div class="modal-backdrop"></div>
+    <div class="modal-content compare-modal">
+      <button type="button" class="modal-close" id="compareClose">×</button>
+      <h3>Сравнение вариантов</h3>
+      <div class="compare-pickers">
+        <label>Слева <select id="compareLeft"></select></label>
+        <label>Справа <select id="compareRight"></select></label>
+      </div>
+      <div class="compare-view">
+        <div class="compare-pane"><img id="compareImgLeft" alt=""></div>
+        <div class="compare-pane"><img id="compareImgRight" alt=""></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <p>Формат: A4 / таблоид / свой размер · PDF + INX + Links + Fonts</p>
+</footer>
+
+<script src="/static/grid-editor.js"></script>
+<script src="/static/spread-editor.js"></script>
+<script src="/static/script.js"></script>
+</body>
+</html>
