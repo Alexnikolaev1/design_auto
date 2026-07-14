@@ -50,6 +50,8 @@ def _leading_for(style: str, template: TemplateSpec) -> float:
     if style.startswith("h"):
         lvl = min(int(style[1]) if len(style) > 1 and style[1].isdigit() else 1, 4)
         return template.h_size_pt.get(lvl, 12) * 1.15
+    if style == "lead":
+        return template.body_size_pt * 1.15 * 1.22
     if style == "caption":
         return template.body_size_pt * 0.85 * 1.2
     if style in ("footnote", "table_row"):
@@ -60,9 +62,13 @@ def _leading_for(style: str, template: TemplateSpec) -> float:
 
 
 def _font_for_word(style: str, template: TemplateSpec, bold: bool, italic: bool) -> tuple[str, float]:
+    if style == "h3" and getattr(template, "rubric_font", ""):
+        return template.rubric_font, template.h_size_pt.get(3, 14)
     if style.startswith("h"):
         lvl = min(int(style[1]) if len(style) > 1 and style[1].isdigit() else 1, 4)
         return template.heading_font_bold, template.h_size_pt.get(lvl, 12)
+    if style == "lead":
+        return template.body_font_bold, round(template.body_size_pt * 1.15, 1)
     if bold:
         return template.body_font_bold, template.body_size_pt
     if italic:

@@ -334,6 +334,10 @@ def _score_templates(ref: ReferenceStyleProfile) -> dict[str, float]:
             score += 8
         if ref.columns == 3 and t.id == "modern-grid":
             score += 10
+        if ref.columns >= 3 and t.id == "okolica-news":
+            score += 20
+        if 8.5 <= ref.body_size_pt <= 9.5 and t.id == "okolica-news":
+            score += 12
 
         scores[t.id] = max(score, 0.0)
     return scores
@@ -378,7 +382,7 @@ def apply_reference_to_profile(
     if p.body_size_override_pt <= 0:
         p.body_size_override_pt = ref.body_size_pt
 
-    if ref.page_format_id and ref.page_format_id in ("a4", "tabloid", "newspaper_broadsheet"):
+    if ref.page_format_id and ref.page_format_id in ("a4", "tabloid", "newspaper_broadsheet", "okolica"):
         if p.page_format != "custom":
             p.page_format = ref.page_format_id
 

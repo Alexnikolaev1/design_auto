@@ -165,13 +165,22 @@ def _style_from_filename(fname: str) -> str:
 
 def _guess_category(family: str, path: Path) -> str:
     blob = (family + path.stem).lower()
-    if any(k in blob for k in ("serif", "times", "georgia", "garamond", "baskerville", "ptserif")):
+    if any(k in blob for k in (
+        "serif", "times", "georgia", "garamond", "baskerville", "ptserif",
+        "schoolbook", "literata", "merriweather",
+    )):
         return "serif"
     if any(k in blob for k in ("mono", "courier", "consolas", "code")):
         return "mono"
-    if any(k in blob for k in ("display", "montserrat", "impact", "bebas", "oswald")):
+    if any(k in blob for k in (
+        "display", "montserrat", "impact", "bebas", "oswald",
+        "adventure", "script", "brush", "cooper", "zeppelin",
+    )):
         return "display"
-    if any(k in blob for k in ("sans", "arial", "helvetica", "calibri", "roboto", "ptsans", "verdana")):
+    if any(k in blob for k in (
+        "sans", "arial", "helvetica", "helios", "calibri", "roboto",
+        "ptsans", "verdana", "franklin",
+    )):
         return "sans"
     return "other"
 

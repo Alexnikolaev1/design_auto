@@ -235,7 +235,12 @@ def _emit_page_on_spread(
             rect_el.set("StrokeWeight", "0.5")
             rect_el.set("StrokeColor", color_black)
         else:
-            rect_el.set("StrokeWeight", "0")
+            stroke = getattr(img_frame, "stroke_pt", 0) or 0
+            if stroke > 0:
+                rect_el.set("StrokeWeight", f"{stroke:.2f}")
+                rect_el.set("StrokeColor", color_black)
+            else:
+                rect_el.set("StrokeWeight", "0")
 
         if getattr(img_frame, "text_wrap", False):
             twp = etree.SubElement(rect_el, "TextWrapPreference")
@@ -290,6 +295,8 @@ def build_inx(parsed: ParsedDocument, plan: LayoutPlan,
         template.body_font, template.body_font_bold, template.body_font_italic,
         template.heading_font, template.heading_font_bold,
     }
+    if getattr(template, "rubric_font", ""):
+        used_font_names.add(template.rubric_font)
     font_family_map: dict[str, tuple[str, str]] = {}
     registered_fonts: set[str] = set()
     for ps_name in used_font_names:
@@ -316,8 +323,12 @@ def build_inx(parsed: ParsedDocument, plan: LayoutPlan,
     style_defs = {
         "Заголовок 1": (template.heading_font_bold, template.h_size_pt.get(1, 22)),
         "Заголовок 2": (template.heading_font_bold, template.h_size_pt.get(2, 17)),
-        "Заголовок 3": (template.heading_font_bold, template.h_size_pt.get(3, 13)),
+        "Заголовок 3": (
+            getattr(template, "rubric_font", None) or template.heading_font_bold,
+            template.h_size_pt.get(3, 13),
+        ),
         "Заголовок 4": (template.heading_font_bold, template.h_size_pt.get(4, 11)),
+        "Лид": (template.body_font_bold, round(template.body_size_pt * 1.15, 1)),
         "Основной текст": (template.body_font, template.body_size_pt),
         "Список": (template.body_font, template.body_size_pt),
         "Сноска": (template.body_font_italic, max(7.5, template.body_size_pt * 0.88)),

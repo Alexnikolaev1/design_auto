@@ -38,12 +38,22 @@ def _draw_runs(draw, x: float, y: float, runs: list[Run], style: str,
                template, plan: LayoutPlan, get_font, scale: float) -> float:
     is_heading = style.startswith("h")
     is_caption = style == "caption"
-    if is_heading:
+    if style == "h3" and getattr(template, "rubric_font", ""):
+        size_pt = template.h_size_pt.get(3, 14)
+        leading = size_pt * 1.15
+        color = (20, 20, 20)
+        base_ps = template.rubric_font
+    elif is_heading:
         lvl = min(int(style[1]) if len(style) > 1 and style[1].isdigit() else 1, 4)
         size_pt = template.h_size_pt.get(lvl, 12)
         leading = size_pt * 1.15
         color = plan.dominant_accent_rgb
         base_ps = template.heading_font_bold
+    elif style == "lead":
+        size_pt = round(template.body_size_pt * 1.15, 1)
+        leading = size_pt * 1.22
+        color = (20, 20, 20)
+        base_ps = template.body_font_bold
     elif is_caption:
         size_pt = template.body_size_pt * 0.85
         leading = size_pt * 1.2
@@ -122,6 +132,37 @@ def render_page_image(
     img = Image.new("RGB", (px_w, px_h), "white")
     draw = ImageDraw.Draw(img)
 
+    from app.layout.newspaper import is_newspaper_template, masthead_reserve_pt
+    from app.layout.okolica_profile import ACCENT_LOGO_RGB
+
+    if is_newspaper_template(template):
+        m = plan.profile.margins_pt(page.index)
+        mh = masthead_reserve_pt()
+        # фиолетовая «блямба» логотипа + название
+        logo_x = m["left"] * scale
+        logo_y = (m["top"] * 0.35) * scale
+        logo_w = 78 * scale
+        logo_h = min(mh * scale * 0.95, 28 * scale)
+        draw.rounded_rectangle(
+            [logo_x, logo_y, logo_x + logo_w, logo_y + logo_h],
+            radius=max(2, int(4 * scale)), fill=ACCENT_LOGO_RGB,
+        )
+        logo_font = get_font(
+            getattr(template, "rubric_font", "") or template.heading_font_bold,
+            9, bold=False, italic=True,
+        )
+        draw.text(
+            (logo_x + 4 * scale, logo_y + 2 * scale),
+            "Сибирская околица",
+            font=logo_font, fill=(255, 255, 255),
+        )
+        issue_font = get_font(template.body_font, 8, False, False)
+        draw.text(
+            (logo_x + logo_w + 8 * scale, logo_y + 4 * scale),
+            "газета · образец вёрстки",
+            font=issue_font, fill=(80, 80, 80),
+        )
+
     if plan.profile.print_marks:
         bleed_px = plan.profile.bleed_pt() * scale
         draw.rectangle(
@@ -162,8 +203,10 @@ def render_page_image(
                 top = (photo.height - target_h) // 2
                 photo = photo.crop((left, top, left + target_w, top + target_h))
             img.paste(photo, (box[0], box[1]))
-            if getattr(img_frame, "image_role", "") == "ad":
-                draw.rectangle(box, outline=(80, 80, 80), width=max(1, int(scale * 0.5)))
+            stroke = getattr(img_frame, "stroke_pt", 0) or 0
+            if stroke > 0 or getattr(img_frame, "image_role", "") == "ad":
+                wline = max(1, int(scale * max(stroke, 0.5)))
+                draw.rectangle(box, outline=(30, 30, 30), width=wline)
             if getattr(img_frame, "show_ad_label", False):
                 from app.layout.ad_units import AD_LABEL_TEXT
                 label_font = get_font(template.body_font_italic, 7.5, italic=True)

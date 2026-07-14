@@ -21,14 +21,18 @@ LOGO_MAX_SIDE = 480
 
 def classify_image(path: Path, filename: str = "", forced_role: str = "") -> str:
     """
-    Возвращает роль: photo | banner | logo | ad.
+    Возвращает роль: photo | lead | portrait | banner | logo | ad.
     """
-    if forced_role in ("photo", "banner", "logo", "ad"):
+    if forced_role in ("photo", "banner", "logo", "ad", "lead", "portrait", "mid"):
         return forced_role
 
     name = (filename or path.name).lower()
     if LOGO_NAME_RE.search(name):
         return "logo"
+    if re.search(r"(?:lead|hero|main|облож|главн)", name, re.I):
+        return "lead"
+    if re.search(r"(?:portrait|портрет|лицо|avatar)", name, re.I):
+        return "portrait"
 
     from app.layout.ad_units import parse_dimensions_from_filename, parse_area_cm2_from_filename
     if parse_dimensions_from_filename(name) or parse_area_cm2_from_filename(name):
@@ -53,6 +57,8 @@ def classify_image(path: Path, filename: str = "", forced_role: str = "") -> str
                 return "banner"
             if ratio >= 1.6 and h <= 400:
                 return "banner"
+            if ratio < 0.85:
+                return "portrait"
     except Exception:
         pass
     return "photo"

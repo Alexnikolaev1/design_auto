@@ -24,6 +24,13 @@ class PageFormat:
 
 
 PAGE_FORMATS: dict[str, PageFormat] = {
+    "okolica": PageFormat(
+        id="okolica",
+        name="Околица (221.6×288.6 мм)",
+        width_mm=221.58,
+        height_mm=288.58,
+        description="Полоса «Сибирская околица» (выпуск 027); разворот 026 ≈ 2×205×272",
+    ),
     "a4": PageFormat(
         id="a4",
         name="A4 (210×297 мм)",
@@ -48,8 +55,8 @@ PAGE_FORMATS: dict[str, PageFormat] = {
     "custom": PageFormat(
         id="custom",
         name="Свой формат",
-        width_mm=210.0,
-        height_mm=297.0,
+        width_mm=221.58,
+        height_mm=288.58,
         description="Произвольный размер полосы в миллиметрах",
     ),
 }

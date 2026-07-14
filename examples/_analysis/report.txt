@@ -1,0 +1,360 @@
+﻿========================================================================
+002_Okolica_027.pdf
+page mm: 221.58 x 288.58
+margins mm L/R/T/B: 18.29, 15.68, 13.55, 14.01
+spans=132 images=0
+cols~3 at mm [18.49, 87.67, 148.15]
+  gap between left-edges mm: [69.18, 60.49]
+  col0 median width mm: 61.07
+  col1 median width mm: 56.99
+  col2 median width mm: 56.99
+size hist: [(9.0, 123), (16.4, 2), (23.9, 2), (36.9, 2), (13.0, 1), (11.0, 1), (14.0, 1)]
+fonts: [('HeliosCondC', 112), ('SchoolBookC-Bold', 15), ('TimesNewRomanPS-BoldItal', 2), ('GaramondC', 1), ('SchoolBookC', 1), ('AdventureC', 1)]
+HEADLINES (>=14pt):
+   36.9 SchoolBookC-Bold               y= 30.0 x= 91.8  ╨Ъ╤В╨╛ ╨╖╨┤╨╡╤Б╤М ╤Б╨░╨╝╤Л╨╣
+   36.9 SchoolBookC-Bold               y= 40.5 x= 85.9  ╨│╨╗╨░╨▓╨╜╤Л╨╣ ╨┐╨░╤В╤А╨╕╨╛╤В?
+   23.9 SchoolBookC-Bold               y= 39.6 x= 39.1  ╨Ъ╨╛╤А╨╛╤В╨║╨╕╨╡
+   23.9 SchoolBookC-Bold               y= 47.3 x= 42.6  ╨╜╨╛╨▓╨╛╤Б╤В╨╕
+   16.4 TimesNewRomanPS-BoldItal       y= 13.6 x= 29.9  ╨б╨╕╨▒╨╕╤А╤Б╨║╨░╤П
+   16.4 TimesNewRomanPS-BoldItal       y= 13.6 x= 29.9  ╨б╨╕╨▒╨╕╤А╤Б╨║╨░╤П
+   14.0 AdventureC                     y= 23.7 x=172.1  ╨Ш╤В╨╛╨│╨╕ ╨║╨╛╨╜╨║╤Г╤А╤Б╨░
+RUBRICS/kicker (Helios):
+    9.0 HeliosCondC                    y=132.6  ╨Я╤А╨╛╨║╤Г╤А╨░╤В╤Г╤А╨╛╨╣ ╨г╤Б╤В╤М-╨в╨░╤А╨║╤Б╨║╨╛╨│╨╛ ╤А╨░╨╣╨╛╨╜╨░ ╤Б
+    9.0 HeliosCondC                    y=136.4  ╨┐╤А╨╡╨┤╤Б╤В╨░╨▓╨╕╤В╨╡╨╗╤П╨╝╨╕ ╨╝╨╡╤Б╤В╨╜╨╛╨│╨╛ ╨╛╤В╨┤╨╡╨╗╨░ ╨┐╨╛╨╗╨╕╤Ж╨╕╨╕,
+    9.0 HeliosCondC                    y=140.2  ╤А╨░╨╣╨╛╨╜╨╜╨╛╨╣ ╨║╨╛╨╝╨╕╤Б╤Б╨╕╨╡╨╣ ╨┐╨╛ ╨┤╨╡╨╗╨░╨╝ ╨╜╨╡╤Б╨╛╨▓╨╡╤А╤И╨╡╨╜╨╜╨╛-
+    9.0 HeliosCondC                    y=144.0  ╨╗╨╡╤В╨╜╨╕╤Е, ╨╛╤В╨┤╨╡╨╗╨░ ╨┐╨╛ ╨│╤А╨░╨╢╨┤╨░╨╜╤Б╨║╨╛╨╣ ╨╛╨▒╨╛╤А╨╛╨╜╨╡ ╨╕ ╨з╨б
+    9.0 HeliosCondC                    y=147.8  ╨░╨┤╨╝╨╕╨╜╨╕╤Б╤В╤А╨░╤Ж╨╕╨╕ ╤А╨░╨╣╨╛╨╜╨░ ╨┐╤А╨╛╨▓╨╡╨┤╨╡╨╜╤Л ╤Б╨╛╨▓╨╝╨╡╤Б╤В╨╜╤Л╨╡
+    9.0 HeliosCondC                    y=151.7  ╤А╨╡╨╣╨┤╨╛╨▓╤Л╨╡ ╨╝╨╡╤А╨╛╨┐╤А╨╕╤П╤В╨╕╤П ╤Б ╤Ж╨╡╨╗╤М╤О ╨┐╤А╨╡╨┤╤Г╨┐╤А╨╡╨╢╨┤╨╡-
+    9.0 HeliosCondC                    y=155.4  ╨╜╨╕╤П ╨╜╨╡╤Б╤З╨░╤Б╤В╨╜╤Л╤Е ╤Б╨╗╤Г╤З╨░╨╡╨▓ ╨╜╨░ ╨▓╨╛╨┤╨╜╤Л╤Е ╨╛╨▒╤К╨╡╨║╤В╨░╤Е ╤Б
+    9.0 HeliosCondC                    y=159.3  ╤Г╤З╨░╤Б╤В╨╕╨╡╨╝ ╨╜╨╡╤Б╨╛╨▓╨╡╤А╤И╨╡╨╜╨╜╨╛╨╗╨╡╤В╨╜╨╕╤Е. ╨Т ╤Е╨╛╨┤╨╡ ╨▓╤Л╨╡╨╖╨┤╨░
+    9.0 HeliosCondC                    y=163.1  ╤Б ╨╜╨╡╤Б╨╛╨▓╨╡╤А╤И╨╡╨╜╨╜╨╛╨╗╨╡╤В╨╜╨╕╨╝╨╕, ╨░ ╤В╨░╨║╨╢╨╡ ╨╕╤Е ╨╖╨░╨║╨╛╨╜╨╜╤Л╨╝╨╕
+    9.0 HeliosCondC                    y=166.9  ╨┐╤А╨╡╨┤╤Б╤В╨░╨▓╨╕╤В╨╡╨╗╤П╨╝╨╕ ╤Б╨╛╤Б╤В╨░╨▓╨╗╨╡╨╜╤Л ╨▒╨╡╤Б╨╡╨┤╤Л ╨╛ ╨╝╨╡╤А╨░╤Е
+    9.0 HeliosCondC                    y=170.7  ╨▒╨╡╨╖╨╛╨┐╨░╤Б╨╜╨╛╤Б╤В╨╕ ╨┐╤А╨╕ ╨╜╨░╤Е╨╛╨╢╨┤╨╡╨╜╨╕╨╕ ╨╜╨░ ╨▓╨╛╨┤╨╜╤Л╤Е ╨╛╨▒╤К-
+    9.0 HeliosCondC                    y=174.5  ╨╡╨║╤В╨░╤Е. ╨Т ╨╝╨░╨╡ ╤В╨╡╨║╤Г╤Й╨╡╨│╨╛ ╨│╨╛╨┤╨░, ╨┤╨╛ ╨╜╨░╤З╨░╨╗╨░ ┬л╨║╤Г╨┐╨░╨╗╤М-
+IMAGES (top 8):
+body median pt: 9.00
+  lead x~18.34 mm median pt: 10.80
+  lead x~87.84 mm median pt: 10.80
+  lead x~148.17 mm median pt: 10.80
+========================================================================
+001_Okolica_027.pdf
+page mm: 221.58 x 288.58
+margins mm L/R/T/B: 14.28, 21.98, 20.57, 137.29
+spans=19 images=0
+cols~0 at mm []
+size hist: [(24.0, 14), (15.0, 3), (9.0, 1), (18.4, 1)]
+fonts: [('AdventureC', 17), ('HeliosCondC-Bold', 1), ('Impact', 1)]
+HEADLINES (>=14pt):
+   24.0 AdventureC                     y=121.1 x= 20.3  тАв ╨Ф╨░╤А╨╕╤В╤М
+   24.0 AdventureC                     y=130.5 x= 20.3  ╨╖╨░╨▒╨╛╤В╤Г
+   24.0 AdventureC                     y= 91.9 x= 20.3  тАв ╨Ф╨╛╤А╨╛╨│╨╛╨╣
+   24.0 AdventureC                     y=101.4 x= 20.3  ╨┐╨╛╨┤╨░╤А╨╛╨║
+   24.0 AdventureC                     y= 91.9 x= 20.3  тАв ╨Ф╨╛╤А╨╛╨│╨╛╨╣
+   24.0 AdventureC                     y= 66.5 x= 20.3  тАв ╨С╨╡╤А╨╡╨│╨╕╤В╨╡
+   24.0 AdventureC                     y= 76.0 x= 20.3  ╨▒╨╡╨╜╨╖╨╕╨╜
+   24.0 AdventureC                     y=121.1 x= 20.3  тАв ╨Ф╨░╤А╨╕╤В╤М
+   24.0 AdventureC                     y=101.4 x= 20.3  ╨┐╨╛╨┤╨░╤А╨╛╨║
+   24.0 AdventureC                     y= 66.5 x= 20.3  тАв ╨С╨╡╤А╨╡╨│╨╕╤В╨╡
+RUBRICS/kicker (Helios):
+    9.0 HeliosCondC-Bold               y= 23.0  тДЦ27 (1313) / 15 ╨Ш╨о╨Ы╨п, 2026 ╨У.
+IMAGES (top 8):
+========================================================================
+003_Okolica_027.pdf
+page mm: 221.58 x 288.58
+margins mm L/R/T/B: 16.74, 17.52, 16.21, 14.01
+spans=208 images=0
+cols~4 at mm [16.74, 84.21, 132.18, 145.5]
+  gap between left-edges mm: [67.48, 47.96, 13.32]
+  col0 median width mm: 61.07
+  col1 median width mm: 57.79
+  col2 median width mm: 67.48
+  col3 median width mm: 57.79
+size hist: [(9.0, 130), (10.3, 42), (11.9, 14), (21.9, 10), (25.9, 7), (23.9, 2), (13.0, 1), (14.0, 1), (38.3, 1)]
+fonts: [('HeliosCondC', 120), ('HeliosCondC-Bold', 66), ('SchoolBookC-Bold', 12), ('Calibri-Bold', 7), ('GaramondC', 1), ('SchoolBookC-BoldItalic', 1), ('AdventureC', 1)]
+HEADLINES (>=14pt):
+   38.3 SchoolBookC-Bold               y= 86.2 x= 89.1  ╨С╨╡╤А╨╡╨│╨╕╤В╨╡ ╨▒╨╡╨╜╨╖╨╕╨╜
+   25.9 Calibri-Bold                   y= 16.6 x=104.5  ╨Я╨а╨Ю╨У╨Э╨Ю╨Ч ╨Я╨Ю╨У╨Ю╨Ф╨л
+   25.9 Calibri-Bold                   y= 16.6 x=104.5  ╨Я╨а╨Ю╨У╨Э╨Ю╨Ч ╨Я╨Ю╨У╨Ю╨Ф╨л
+   25.9 Calibri-Bold                   y= 16.6 x=104.5  ╨Я╨а╨Ю╨У╨Э╨Ю╨Ч ╨Я╨Ю╨У╨Ю╨Ф╨л
+   25.9 Calibri-Bold                   y= 16.6 x=104.5  ╨Я╨а╨Ю╨У╨Э╨Ю╨Ч ╨Я╨Ю╨У╨Ю╨Ф╨л
+   25.9 Calibri-Bold                   y= 16.6 x=104.5  ╨Я╨а╨Ю╨У╨Э╨Ю╨Ч ╨Я╨Ю╨У╨Ю╨Ф╨л
+   25.9 Calibri-Bold                   y= 16.6 x=104.5  ╨Я╨а╨Ю╨У╨Э╨Ю╨Ч ╨Я╨Ю╨У╨Ю╨Ф╨л
+   25.9 Calibri-Bold                   y= 16.6 x=104.5  ╨Я╨а╨Ю╨У╨Э╨Ю╨Ч ╨Я╨Ю╨У╨Ю╨Ф╨л
+   23.9 SchoolBookC-Bold               y= 16.2 x= 35.6  ╨Ъ╨╛╤А╨╛╤В╨║╨╕╨╡
+   23.9 SchoolBookC-Bold               y= 23.9 x= 39.1  ╨╜╨╛╨▓╨╛╤Б╤В╨╕
+RUBRICS/kicker (Helios):
+   11.9 HeliosCondC-Bold               y= 30.4  15
+   11.9 HeliosCondC-Bold               y= 30.2  ╨б╤А.
+   11.9 HeliosCondC-Bold               y= 30.4  16
+   11.9 HeliosCondC-Bold               y= 30.2  ╨з╤В.
+   11.9 HeliosCondC-Bold               y= 30.4  17
+   11.9 HeliosCondC-Bold               y= 30.2  ╨Я╤В.
+   11.9 HeliosCondC-Bold               y= 30.4  18
+   11.9 HeliosCondC-Bold               y= 30.2  ╨б╨▒.
+   11.9 HeliosCondC-Bold               y= 30.4  19
+   11.9 HeliosCondC-Bold               y= 30.2  ╨Т╤Б.
+   11.9 HeliosCondC-Bold               y= 30.4  20
+   11.9 HeliosCondC-Bold               y= 30.2  ╨Я╨╜.
+IMAGES (top 8):
+body median pt: 9.00
+  lead x~16.58 mm median pt: 10.80
+  lead x~84.31 mm median pt: 10.80
+  lead x~145.34 mm median pt: 10.80
+========================================================================
+004_Okolica_027.pdf
+page mm: 221.58 x 288.58
+margins mm L/R/T/B: 18.29, 14.62, 13.62, 14.01
+spans=106 images=0
+cols~5 at mm [18.29, 76.29, 91.23, 130.79, 145.29]
+  gap between left-edges mm: [58.0, 14.94, 39.56, 14.5]
+  col0 median width mm: 32.63
+  col1 median width mm: 47.59
+  col2 median width mm: 40.93
+  col3 median width mm: 23.09
+  col4 median width mm: 60.76
+size hist: [(9.0, 89), (6.0, 3), (26.0, 3), (16.3, 2), (14.0, 2), (35.0, 2), (13.0, 1), (11.0, 1), (25.9, 1), (43.9, 1), (8.9, 1)]
+fonts: [('HeliosCondC', 83), ('SchoolBookC-Bold', 16), ('TimesNewRomanPS-BoldItal', 2), ('AdventureC', 2), ('GaramondC', 1), ('SchoolBookC', 1), ('SchoolBookC-BoldItalic', 1)]
+HEADLINES (>=14pt):
+   43.9 SchoolBookC-Bold               y=190.5 x=127.8  ╤З╨╡╨╗╨╛╨▓╨╡╨║╨░!
+   35.0 SchoolBookC-Bold               y=183.3 x= 79.2  ╨Ф╨╡╤Б╤П╤В╤М
+   35.0 SchoolBookC-Bold               y=193.4 x= 58.5  ╤В╨░╨║ ╨┤╨╡╤Б╤П╤В╤М
+   26.0 SchoolBookC-Bold               y= 22.2 x= 70.8  ╨б╨╛╤В╤А╤Г╨┤╨╜╨╕╨║╨╕
+   26.0 SchoolBookC-Bold               y= 31.1 x= 19.7  ╨Ю╨Ю╨Ю ┬л╨в╨░╤В╨░╤А╤Б╨║╨╖╨╡╤А╨╜╨╛╨┐╤А╨╛╨┤╤Г╨║╤В┬╗
+   26.0 SchoolBookC-Bold               y= 39.9 x= 20.6  ╤Г╨┤╨╛╤Б╤В╨╛╨╡╨╜╤Л ╨╜╨░╨│╤А╨░╨┤╤Л ╨Ь╨╕╨╜╤Б╨╡╨╗╤М╤Е╨╛╨╖╨░ ╨а╨╛╤Б╤Б╨╕╨╕
+   25.9 SchoolBookC-Bold               y=184.0 x=129.1  ╨Я╨╛╨╝╨╛╨│╨╕╤В╨╡ ╨╜╨░╨╣╤В╨╕
+   16.3 TimesNewRomanPS-BoldItal       y= 13.6 x= 29.7  ╨б╨╕╨▒╨╕╤А╤Б╨║╨░╤П
+   16.3 TimesNewRomanPS-BoldItal       y= 13.6 x= 29.7  ╨б╨╕╨▒╨╕╤А╤Б╨║╨░╤П
+   14.0 AdventureC                     y= 24.9 x=189.7  ╨Э╨░╨│╤А╨░╨┤╨░
+RUBRICS/kicker (Helios):
+    9.0 HeliosCondC                    y= 90.3  ╨Т ╤Е╨╛╨┤╨╡ ╨╝╨╡╤А╨╛╨┐╤А╨╕╤П╤В╨╕╤П
+    9.0 HeliosCondC                    y= 94.2  ╨│╨╗╨░╨▓╨░ ╨в╨░╤В╨░╤А╤Б╨║╨╛╨│╨╛ ╤А╨░╨╣╨╛╨╜╨░
+    9.0 HeliosCondC                    y= 98.0  ╨о╤А╨╕╨╣ ╨Ь╨░╤А╨║╨╗╨╡╨╜╨╛╨▓╨╕╤З ╨Т╤П╨╖╨╛╨▓
+    9.0 HeliosCondC                    y=101.8  ╨┐╨╛╨┤╨▓╨╡╨╗ ╨╕╤В╨╛╨│╨╕ ╤Б╨╡╨╗╤М╤Б╨║╨╛-
+    9.0 HeliosCondC                    y=105.6  ╤Е╨╛╨╖╤П╨╣╤Б╤В╨▓╨╡╨╜╨╜╨╛╨│╨╛ ╨│╨╛╨┤╨░, ╨┐╨╛-
+    9.0 HeliosCondC                    y=113.2  ╤В╨░╨▓╨╕╤В╨╡╨╗╨╡╨╣ ╨┐╨╡╤А╨╡╤А╨░╨▒╨░╤В╤Л-
+    9.0 HeliosCondC                    y=117.0  ╨▓╨░╤О╤Й╨╕╤Е ╨┐╤А╨╡╨┤╨┐╤А╨╕╤П╤В╨╕╨╣ ╤Б
+    9.0 HeliosCondC                    y=120.8  ╨┐╤А╨╛╤Д╨╡╤Б╤Б╨╕╨╛╨╜╨░╨╗╤М╨╜╤Л╨╝ ╨┐╤А╨░╨╖╨┤╨╜╨╕╨║╨╛╨╝, ╨▓╤Л╤А╨░╨╖╨╕╨╗
+    9.0 HeliosCondC                    y=124.6  ╨┐╤А╨╕╨╖╨╜╨░╤В╨╡╨╗╤М╨╜╨╛╤Б╤В╤М ╨▓╨╡╤В╨╡╤А╨░╨╜╨░╨╝ ╨╛╤В╤А╨░╤Б╨╗╨╕.
+    9.0 HeliosCondC                    y=128.4  ╨Ю╤Б╨╛╨▒╨╛╨╣ ╨│╨╛╤А╨┤╨╛╤Б╤В╤М╤О ╨┤╨╗╤П ╨Ю╨Ю╨Ю ┬л╨в╨░╤В╨░╤А╤Б╨║╨╖╨╡╤А-
+    9.0 HeliosCondC                    y=132.3  ╨╜╨╛╨┐╤А╨╛╨┤╤Г╨║╤В┬╗ ╤Б╤В╨░╨╗╨╛ ╨▓╤А╤Г╤З╨╡╨╜╨╕╨╡ ╨║╨╛╨╗╨╗╨╡╨│╨░╨╝ ╨╜╨░╨│╤А╨░╨┤
+    9.0 HeliosCondC                    y=136.1  ╨Ь╨╕╨╜╨╕╤Б╤В╨╡╤А╤Б╤В╨▓╨░ ╤Б╨╡╨╗╤М╤Б╨║╨╛╨│╨╛ ╤Е╨╛╨╖╤П╨╣╤Б╤В╨▓╨░ ╨а╨╛╤Б╤Б╨╕╨╣-
+IMAGES (top 8):
+body median pt: 9.00
+  lead x~18.34 mm median pt: 10.80
+  lead x~76.2 mm median pt: 10.80
+  lead x~91.37 mm median pt: 10.80
+  lead x~130.88 mm median pt: 10.80
+  lead x~145.34 mm median pt: 10.80
+========================================================================
+005_Okolica_027.pdf
+page mm: 221.58 x 288.58
+margins mm L/R/T/B: 15.92, 17.78, 17.96, 14.01
+spans=226 images=0
+cols~7 at mm [16.29, 37.16, 52.74, 80.09, 94.17, 109.56, 146.69]
+  gap between left-edges mm: [20.88, 15.57, 27.35, 14.08, 15.39, 37.13]
+  col0 median width mm: 34.83
+  col1 median width mm: 38.85
+  col2 median width mm: 23.11
+  col3 median width mm: 56.56
+  col4 median width mm: 40.67
+  col5 median width mm: 25.64
+  col6 median width mm: 54.08
+size hist: [(9.0, 144), (14.4, 15), (8.5, 14), (11.1, 8), (12.8, 6), (7.7, 4), (10.0, 3), (11.0, 3), (20.8, 3), (13.0, 2), (10.8, 2), (12.1, 2), (14.0, 2), (7.4, 2)]
+fonts: [('HeliosCondC', 88), ('HeliosCondC-Bold', 51), ('SchoolBookC-Bold', 34), ('SchoolBookC', 28), ('HeliosCondBlackC', 11), ('Cooper', 4), ('SchoolBookC-Italic', 3), ('SchoolBookC-BoldItalic', 3), ('GaramondC', 2), ('AdventureC', 2)]
+HEADLINES (>=14pt):
+   26.0 SchoolBookC-Bold               y=152.3 x= 15.9  ╨б╨░╨╝╨╛╨╗╨╡╤В тАУ ╨┤╨╡╨╗╨╛ ╨╜╨╡╨╛╨▒╤Л╤З╨╜╨╛╨╡тАж
+   20.8 SchoolBookC-Italic             y= 25.7 x=157.0  ╨У╨Ю╨Ы╨Ю╨б
+   20.8 SchoolBookC-Italic             y= 33.5 x=157.0  ╨Э╨Р╨а╨Ю╨Ф╨Р
+   20.8 SchoolBookC-Italic             y= 33.5 x=157.0  ╨Э╨Р╨а╨Ю╨Ф╨Р
+   20.5 SchoolBookC-BoldItalic         y= 51.7 x= 69.5  ╨Т ╤Н╤В╨╕
+   20.5 SchoolBookC-BoldItalic         y= 58.3 x= 74.0  ╨┤╨╜╨╕
+   18.5 Cooper                         y=245.3 x= 98.2  ├Т├Е├Х├Н├И├К├И
+   14.8 HeliosCondC-Bold               y=237.5 x=147.4  ╨Ю╨Ъ╨Э╨Р, ╨Ф╨Т╨Х╨а╨Ш, ╨С╨Р╨Ы╨Ъ╨Ю╨Э╨л,
+   14.8 HeliosCondC-Bold               y=243.6 x=151.9  ╨Ы╨Ю╨Ф╨Ц╨Ш╨Ш, ╨Т╨Х╨а╨Р╨Э╨Ф╨л
+   14.4 HeliosCondC-Bold               y=258.7 x=149.6  26-508, 8-913-397-5700
+RUBRICS/kicker (Helios):
+   10.0 HeliosCondC-Bold               y=255.0  8-951-372-5532
+   10.0 HeliosCondC-Bold               y=259.0  8-951-396-3577
+   10.0 HeliosCondC-Bold               y=262.9  ╨Ъ╨╛╨╜╤Б╤В╨░╨╜╤В╨╕╨╜
+   10.8 HeliosCondC-Bold               y=258.9  тАв ╨┐╨░╤А╨╛╨╛╤З╨╕╤Б╤В╨╕╤В╨╡╨╗╤М
+   10.8 HeliosCondC-Bold               y=262.7  тАв ╨╝╨╛╤О╤Й╨╕╨╣ ╨┐╤Л╨╗╨╡╤Б╨╛╤Б
+   12.1 HeliosCondC-Bold               y=257.6  ╨С╨Ю╨Ы╨Х╨Х
+   12.1 HeliosCondC-Bold               y=261.3  20 ╨Ы╨Х╨в!
+   11.0 HeliosCondC-Bold               y=238.7  ╨Т╨л╨Я╨Ю╨Ы╨Э╨п╨о
+   11.0 HeliosCondC-Bold               y=238.7  ╨Ю╨в╨Ф╨Х╨Ы╨Ю╨з╨Э╨л╨Х ╨а╨Р╨С╨Ю╨в╨л
+   11.0 HeliosCondC-Bold               y=242.6  ╨Я╨Ю ╨Т╨Э╨г╨в╨а╨Х╨Э╨Э╨Ш╨Ь ╨Я╨Ю╨Ь╨Х╨й╨Х╨Э╨Ш╨п╨Ь:
+   14.4 HeliosCondC-Bold               y=258.7  26-508, 8-913-397-5700
+   13.6 HeliosCondBlackC               y=232.4  21 ╨У╨Ю╨Ф ╨б ╨Т╨Р╨Ь╨Ш!
+IMAGES (top 8):
+body median pt: 9.00
+  lead x~16.23 mm median pt: 10.80
+  lead x~37.04 mm median pt: 7.70
+  lead x~80.08 mm median pt: 10.80
+  lead x~94.19 mm median pt: 10.80
+========================================================================
+008_Okolica_027.pdf
+page mm: 221.58 x 288.58
+margins mm L/R/T/B: 18.29, 15.52, 13.62, 14.01
+spans=212 images=0
+cols~9 at mm [18.29, 32.01, 47.03, 81.79, 102.74, 122.23, 145.29, 159.18, 173.11]
+  gap between left-edges mm: [13.71, 15.03, 34.76, 20.95, 19.49, 23.05, 13.89, 13.93]
+  col0 median width mm: 60.76
+  col1 median width mm: 33.14
+  col2 median width mm: 28.52
+  col3 median width mm: 60.76
+  col4 median width mm: 39.81
+  col5 median width mm: 19.56
+  col6 median width mm: 60.76
+  col7 median width mm: 41.43
+  col8 median width mm: 31.63
+size hist: [(9.0, 157), (10.0, 7), (8.7, 5), (11.0, 5), (8.5, 5), (6.0, 4), (7.0, 4), (17.7, 3), (12.9, 3), (16.3, 2), (11.6, 2), (11.7, 2), (34.0, 2), (13.0, 1)]
+fonts: [('HeliosCondC', 135), ('HeliosCondC-Bold', 59), ('SchoolBookC-Bold', 4), ('FranklinGothic-Heavy', 4), ('TimesNewRomanPS-BoldItal', 2), ('Wingdings-Regular', 2), ('GaramondC', 1), ('HeliosCondC-BoldItalic', 1), ('SchoolBookC', 1), ('SchoolBookC-BoldItalic', 1), ('Coca-ColaRegularrus-lat', 1), ('AdventureC', 1)]
+HEADLINES (>=14pt):
+   34.0 SchoolBookC-Bold               y= 98.6 x= 80.4  ╨Ш╤О╨╗╤М╤Б╨║╨╕╨╣
+   34.0 SchoolBookC-Bold               y=107.7 x= 92.4  ╤А╤Л╨▓╨╛╨║
+   18.3 HeliosCondC-Bold               y=227.0 x= 67.5  ╨С╨Р╨Э╨Ъ╨а╨Ю╨в╨б╨в╨Т╨Ю ╨д╨Ш╨Ч╨Ш╨з╨Х╨б╨Ъ╨Ш╨е ╨Ы╨Ш╨ж
+   17.7 HeliosCondC-Bold               y=235.2 x= 68.9  ╨Я╨Ю╨Ь╨Ю╨й╨м ╨Т ╨Ч╨Р╨Ъ╨Ю╨Э╨Э╨Ю╨Ь
+   17.7 HeliosCondC-Bold               y=241.8 x= 68.9  ╨б╨Я╨Ш╨б╨Р╨Э╨Ш╨Ш ╨Ф╨Ю╨Ы╨У╨Ю╨Т
+   17.7 HeliosCondC-Bold               y=248.6 x= 68.9  ╨Я╨Ю ╨Ъ╨а╨Х╨Ф╨Ш╨в╨Р╨Ь
+   16.3 TimesNewRomanPS-BoldItal       y= 13.6 x= 29.7  ╨б╨╕╨▒╨╕╤А╤Б╨║╨░╤П
+   16.3 TimesNewRomanPS-BoldItal       y= 13.6 x= 29.7  ╨б╨╕╨▒╨╕╤А╤Б╨║╨░╤П
+   15.0 HeliosCondC-Bold               y=227.3 x= 20.5  ╨Я╨Ш╨Ы╨Ю╨Ь╨Р╨в╨Х╨а╨Ш╨Р╨Ы╨л
+   14.0 AdventureC                     y= 16.1 x=170.8  ╨Ч╨░╨▒╨╛╤В╨║╨╕ ╨╛ ╤Б╨╛╤В╨║╨╡
+RUBRICS/kicker (Helios):
+   10.7 HeliosCondC-Bold               y=222.6  ╨Ю╨Ю╨Ю ┬л╨ж╨╡╨╜╤В╤А ╨╖╨░╤Й╨╕╤В╤Л ╨│╤А╨░╨╢╨┤╨░╨╜┬╗
+   17.7 HeliosCondC-Bold               y=235.2  ╨Я╨Ю╨Ь╨Ю╨й╨м ╨Т ╨Ч╨Р╨Ъ╨Ю╨Э╨Э╨Ю╨Ь
+   17.7 HeliosCondC-Bold               y=241.8  ╨б╨Я╨Ш╨б╨Р╨Э╨Ш╨Ш ╨Ф╨Ю╨Ы╨У╨Ю╨Т
+   17.7 HeliosCondC-Bold               y=248.6  ╨Я╨Ю ╨Ъ╨а╨Х╨Ф╨Ш╨в╨Р╨Ь
+    9.0 HeliosCondC-Bold               y= 52.2  ╨Я╨Ю╨Ы╨Ш╨Т
+    9.0 HeliosCondC                    y= 52.2  тАУ
+    9.0 HeliosCondC-Bold               y= 52.2  ╨Ч╨Ю╨Ы╨Ю╨в╨Ю╨Х ╨Я╨а╨Р╨Т╨Ш╨Ы╨Ю ╨Ъ╨Ю╨а╨Ю╨в╨Ъ╨Ю╨У╨Ю ╨Ы╨Х╨в╨Р
+    9.0 HeliosCondC                    y= 56.1  ╨Т ╨╢╨░╤А╤Г ╤А╤Г╨║╨░ ╤Б╨░╨╝╨░ ╤В╤П╨╜╨╡╤В╤Б╤П ╨║ ╤И╨╗╨░╨╜╨│╤Г, ╨╜╨╛ ╨▒╨╡╨╖-
+    9.0 HeliosCondC                    y= 59.9  ╨┤╤Г╨╝╨╜╤Л╨╣ ╨┐╨╛╨╗╨╕╨▓ ╨╜╨░ ╨│╨╗╨╕╨╜╨╕╤Б╤В╨╛╨╣ ╨┐╨╛╤З╨▓╨╡ ╨│╤Г╨▒╨╕╤В ╤Г╤А╨╛╨╢╨░╨╣
+    9.0 HeliosCondC                    y= 63.7  ╨▒╤Л╤Б╤В╤А╨╡╨╡ ╨╖╨░╤Б╤Г╤Е╨╕. ╨Ч╨░╨┐╨╛╨╝╨╜╨╕╤В╨╡: ╨╗╤Г╤З╤И╨╡ ╨╛╨┤╨╕╨╜ ╤А╨░╨╖
+    9.0 HeliosCondC                    y= 67.5  ╨│╨╗╤Г╨▒╨╛╨║╨╛, ╤З╨╡╨╝ ╨┤╨╡╤Б╤П╤В╤М ╤А╨░╨╖ ╨┐╨╛ ╨▓╨╡╤А╤Е╨░╨╝.
+    9.0 HeliosCondC                    y= 71.3  ╨в╨╛╨╝╨░╤В╤Л ╨▓ ╨╛╤В╨║╤А╤Л╤В╨╛╨╝ ╨│╤А╤Г╨╜╤В╨╡ ╨┤╨╛ ╨╜╨░╨╗╨╕╨▓╨░ ╨┐╨╗╨╛╨┤╨╛╨▓
+IMAGES (top 8):
+body median pt: 9.00
+  lead x~18.34 mm median pt: 10.80
+  lead x~81.84 mm median pt: 10.80
+========================================================================
+025_Okolica_027.pdf
+page mm: 221.58 x 288.58
+margins mm L/R/T/B: 16.02, 16.69, 15.04, 14.01
+spans=179 images=0
+cols~4 at mm [16.02, 79.79, 129.01, 143.29]
+  gap between left-edges mm: [63.78, 49.22, 14.28]
+  col0 median width mm: 61.03
+  col1 median width mm: 60.76
+  col2 median width mm: 67.48
+  col3 median width mm: 60.76
+size hist: [(9.0, 175), (13.0, 1), (14.0, 1), (30.1, 1), (20.0, 1)]
+fonts: [('HeliosCondC', 167), ('HeliosCondC-Bold', 7), ('AdventureC', 2), ('GaramondC', 1), ('SchoolBookC-BoldItalic', 1), ('SchoolBookC-Bold', 1)]
+HEADLINES (>=14pt):
+   30.1 SchoolBookC-Bold               y= 20.3 x= 79.0  ╨Я╤М╤П╨╜╤Б╤В╨▓╨╛ ╨╜╨╡ ╨║╤А╨░╤Б╨╕╤В ╨┤╨░╨╝
+   20.0 AdventureC                     y= 15.0 x= 25.9  ╨Я╤А╨╛╨╕╤Б╤И╨╡╤Б╤В╨▓╨╕╤П
+   14.0 AdventureC                     y= 15.2 x=131.7  ╨Ъ╤А╨╕╨╝╨╕╨╜╨░╨╗
+RUBRICS/kicker (Helios):
+    9.0 HeliosCondC-Bold               y= 33.2  ╨Ф╨Х╨Т╨г╨и╨Ъ╨Р ╨б ╨е╨Р╨а╨Р╨Ъ╨в╨Х╨а╨Ю╨Ь
+    9.0 HeliosCondC                    y= 37.0  ╨в╨░╤В╨░╤А╤Б╨║╨╕╨╣ ╨╝╨╡╨╢╤А╨░╨╣╨╛╨╜╨╜╤Л╨╣ ╨┐╤А╨╛╨║╤Г╤А╨╛╤А ╨Я╨░╨▓╨╡╨╗
+    9.0 HeliosCondC                    y= 40.8  ╨Ф╨╝╨╕╤В╤А╨╛╤З╨╡╨╜╨║╨╛╨▓ ╤Г╤В╨▓╨╡╤А╨┤╨╕╨╗ ╨╛╨▒╨▓╨╕╨╜╨╕╤В╨╡╨╗╤М╨╜╨╛╨╡ ╨╖╨░-
+    9.0 HeliosCondC                    y= 44.6  ╨║╨╗╤О╤З╨╡╨╜╨╕╨╡ ╨┐╨╛ ╤Г╨│╨╛╨╗╨╛╨▓╨╜╨╛╨╝╤Г ╨┤╨╡╨╗╤Г ╨▓ ╨╛╤В╨╜╨╛╤И╨╡╨╜╨╕╨╕
+    9.0 HeliosCondC                    y= 48.4  45-╨╗╨╡╤В╨╜╨╡╨╣ ╨╝╨╡╤Б╤В╨╜╨╛╨╣ ╨╢╨╕╤В╨╡╨╗╤М╨╜╨╕╤Ж╤Л ╨╖╨░ ╨╜╨░╨┐╨░╨┤╨╡╨╜╨╕╨╡
+    9.0 HeliosCondC                    y= 52.2  ╨╜╨░ ╨┐╨╛╨╗╨╕╤Ж╨╡╨╣╤Б╨║╨╕╤Е. ╨Т ╨╜╨╛╤З╤М ╤Б 1-╨│╨╛ ╨╜╨░ 2-╨╡ ╤Д╨╡╨▓╤А╨░╨╗╤П
+    9.0 HeliosCondC                    y= 56.1  2026 ╨│. ╤Б╨╛╤В╤А╤Г╨┤╨╜╨╕╨║╨╕ ╨Ь╨Т╨Ф ╨┐╤А╨╕╨▒╤Л╨╗╨╕ ╨╜╨░ ╨▓╤Л╨╖╨╛╨▓ ╨┐╨╛
+    9.0 HeliosCondC                    y= 59.9  ╨╝╨╡╤Б╤В╤Г ╨┐╤А╨╛╨╢╨╕╨▓╨░╨╜╨╕╤П ╨╛╨▒╨▓╨╕╨╜╤П╨╡╨╝╨╛╨╣ ╤Б ╤Ж╨╡╨╗╤М╤О ╨┐╤А╨╛╨▓╨╡╤А-
+    9.0 HeliosCondC                    y= 63.7  ╨║╨╕ ╤Б╨╛╨╛╨▒╤Й╨╡╨╜╨╕╤П, ╨┐╨╛╤Б╤В╤Г╨┐╨╕╨▓╤И╨╡╨│╨╛ ╨▓ ╨┤╨╡╨╢╤Г╤А╨╜╤Г╤О ╤З╨░╤Б╤В╤М
+    9.0 HeliosCondC                    y= 67.5  ╨╛ ╨╜╨░╤А╤Г╤И╨╡╨╜╨╕╨╕ ╤А╨╡╨╢╨╕╨╝╨░ ╤В╨╕╤И╨╕╨╜╤Л ╨╕ ╨┐╨╛╨║╨╛╤П. ╨Э╨░╤Е╨╛╨┤╤П╤Б╤М
+    9.0 HeliosCondC                    y= 71.3  ╨▓ ╤Б╨╛╤Б╤В╨╛╤П╨╜╨╕╨╕ ╨░╨╗╨║╨╛╨│╨╛╨╗╤М╨╜╨╛╨│╨╛ ╨╛╨┐╤М╤П╨╜╨╡╨╜╨╕╤П ╨╕ ╨▒╤Г╨┤╤Г╤З╨╕ ╨╜╨╡-
+    9.0 HeliosCondC                    y= 75.1  ╨┤╨╛╨▓╨╛╨╗╤М╨╜╨╛╨╣ ╨╖╨░╨║╨╛╨╜╨╜╤Л╨╝╨╕ ╨┤╨╡╨╣╤Б╤В╨▓╨╕╤П╨╝╨╕ ╤Б╨╛╤В╤А╤Г╨┤╨╜╨╕╨║╨╛╨▓
+IMAGES (top 8):
+body median pt: 9.00
+  lead x~15.88 mm median pt: 10.80
+  lead x~79.73 mm median pt: 10.80
+  lead x~143.23 mm median pt: 10.80
+========================================================================
+026_Okolica_027.pdf
+page mm: 221.58 x 288.58
+margins mm L/R/T/B: 18.29, 15.04, 13.55, 14.01
+spans=109 images=0
+cols~3 at mm [18.29, 81.79, 136.86]
+  gap between left-edges mm: [63.5, 55.07]
+  col0 median width mm: 59.93
+  col1 median width mm: 60.76
+  col2 median width mm: 68.43
+size hist: [(9.0, 100), (16.4, 2), (14.0, 2), (13.0, 1), (11.0, 1), (39.1, 1), (35.7, 1), (20.0, 1)]
+fonts: [('HeliosCondC', 93), ('SchoolBookC-Bold', 7), ('AdventureC', 3), ('TimesNewRomanPS-BoldItal', 2), ('GaramondC', 1), ('SchoolBookC', 1), ('SchoolBookC-BoldItalic', 1), ('HeliosCondC-Bold', 1)]
+HEADLINES (>=14pt):
+   39.1 SchoolBookC-Bold               y=150.1 x= 28.3  ╨Я╨╛╤З╤В╨░ ╤Б╨╡╨│╨╛╨┤╨╜╤П╤И╨╜╨╡╨│╨╛ ╨┤╨╜╤П
+   35.7 SchoolBookC-Bold               y= 28.8 x= 83.7  ╨Т╤Б╤В╤А╨╡╤В╨╕╨╝╤Б╤П ╨╛╤Б╨╡╨╜╤М╤О
+   20.0 AdventureC                     y= 41.4 x= 35.7  ╨Ъ╨╛╤А╨╛╤В╨║╨╛
+   16.4 TimesNewRomanPS-BoldItal       y= 13.6 x= 29.9  ╨б╨╕╨▒╨╕╤А╤Б╨║╨░╤П
+   16.4 TimesNewRomanPS-BoldItal       y= 13.6 x= 29.9  ╨б╨╕╨▒╨╕╤А╤Б╨║╨░╤П
+   14.0 AdventureC                     y=146.4 x=177.3  ╨п╨╖╤Л╨║╨╛╨╝ ╤Ж╨╕╤Д╤А
+   14.0 AdventureC                     y= 23.0 x=192.3  ╨б╨╡╤Б╤Б╨╕╤П
+RUBRICS/kicker (Helios):
+    9.0 HeliosCondC                    y=189.4  ╨Э╨╡╤Б╨╝╨╛╤В╤А╤П ╨╜╨░ ╤В╨╛, ╤З╤В╨╛ ╨┐╤А╨░╨╖╨┤╨╜╨╕╨║ ╨╛╤Д╨╕-
+    9.0 HeliosCondC                    y=193.2  ╤Ж╨╕╨░╨╗╤М╨╜╨╛ ╨╛╤В╨╝╨╡╤З╨░╨╡╤В╤Б╤П ╨▓ ╨а╨╛╤Б╤Б╨╕╨╕ 32 ╨│╨╛╨┤╨░,
+    9.0 HeliosCondC                    y=197.0  ╨╕╤Б╤В╨╛╤А╨╕╤П ╤А╨╛╤Б╤Б╨╕╨╣╤Б╨║╨╛╨╣ ╨┐╨╛╤З╤В╤Л ╤Г╤Е╨╛╨┤╨╕╤В ╨║╨╛╤А-
+    9.0 HeliosCondC                    y=200.8  ╨╜╤П╨╝╨╕ ╨▓ ╨│╨╗╤Г╨▒╤М ╨▓╨╡╨║╨╛╨▓, ╨╜╨░╤Б╤З╨╕╤В╤Л╨▓╨░╤П ╨╛╨║╨╛╨╗╨╛
+    9.0 HeliosCondC                    y=204.7  ╤В╤Л╤Б╤П╤З╨╕ ╨╗╨╡╤В. ╨н╤В╨╛ ╨╛╨┤╨╜╨░ ╨╕╨╖ ╤Б╤В╨░╤А╨╡╨╣╤И╨╕╤Е ╨┐╨╛╤З╤В╨╛╨▓╤Л╤Е
+    9.0 HeliosCondC                    y=208.5  ╤Б╨╗╤Г╨╢╨▒ ╨Х╨▓╤А╨╛╨┐╤Л. ╨Э╨░ ╤В╨╡╤А╤А╨╕╤В╨╛╤А╨╕╨╕ ╤Б╨╛╨▓╤А╨╡╨╝╨╡╨╜╨╜╨╛╨╣
+    9.0 HeliosCondC                    y=212.3  ╨Э╨╛╨▓╨╛╤Б╨╕╨▒╨╕╤А╤Б╨║╨╛╨╣ ╨╛╨▒╨╗╨░╤Б╤В╨╕ ╨┐╨╡╤А╨▓╨░╤П ╨┐╨╛╤З╤В╨╛╨▓╨░╤П
+    9.0 HeliosCondC                    y=216.1  ╤Б╤В╨░╨╜╤Ж╨╕╤П ╨┐╨╛╤П╨▓╨╕╨╗╨░╤Б╤М 228 ╨╗╨╡╤В ╨╜╨░╨╖╨░╨┤ (╨▓ 1798 ╨│.)
+    9.0 HeliosCondC                    y=219.9  ╨▓ ╨│╨╛╤А╨╛╨┤╨╡ ╨Ъ╨░╨╕╨╜╤Б╨║╨╡ (╨╜╤Л╨╜╨╡ ╨Ъ╤Г╨╣╨▒╤Л╤И╨╡╨▓). ╨Ш╤Б╤В╨╛╤А╨╕╤П
+    9.0 HeliosCondC                    y=223.7  ╨┐╨╛╤З╤В╨╛╨▓╨╛╨╣ ╤Б╨╗╤Г╨╢╨▒╤Л ╨▓ ╤Б╨░╨╝╨╛╨╝ ╨Э╨╛╨▓╨╛╤Б╨╕╨▒╨╕╤А╤Б╨║╨╡ ╨╜╨░-
+    9.0 HeliosCondC                    y=227.5  ╤З╨░╨╗╨░╤Б╤М 130 ╨╗╨╡╤В ╨╜╨░╨╖╨░╨┤ (╨▓ 1896 ╨│.), ╨║╨╛╨│╨┤╨░ ╨│╨╛╤А╨╛╨┤
+    9.0 HeliosCondC                    y=231.3  ╨▒╤Л╨╗ ╨╡╤Й╤С ╨┐╨╛╤Б╤С╨╗╨║╨╛╨╝ ╨Э╨╛╨▓╨╛-╨Э╨╕╨║╨╛╨╗╨░╨╡╨▓╤Б╨║╨╕╨╝. ╨Э╨░
+IMAGES (top 8):
+body median pt: 9.00
+  lead x~18.34 mm median pt: 10.80
+  lead x~81.84 mm median pt: 10.80
+  lead x~136.88 mm median pt: 10.80
+========================================================================
+032_Okolica_027.pdf
+page mm: 221.58 x 288.58
+margins mm L/R/T/B: 18.29, 15.53, 13.62, 14.01
+spans=186 images=0
+cols~9 at mm [18.29, 32.86, 49.71, 81.79, 95.23, 119.44, 144.14, 158.02, 171.61]
+  gap between left-edges mm: [14.56, 16.85, 32.08, 13.44, 24.21, 24.7, 13.88, 13.59]
+  col0 median width mm: 59.52
+  col1 median width mm: 43.0
+  col2 median width mm: 31.81
+  col3 median width mm: 57.34
+  col4 median width mm: 42.39
+  col5 median width mm: 29.62
+  col6 median width mm: 56.71
+  col7 median width mm: 41.44
+  col8 median width mm: 28.2
+size hist: [(9.0, 143), (8.0, 11), (7.0, 8), (13.4, 5), (7.6, 4), (6.0, 3), (16.3, 2), (13.0, 1), (10.0, 1), (15.5, 1), (11.0, 1), (8.9, 1), (20.0, 1), (15.3, 1)]
+fonts: [('HeliosCondC', 131), ('HeliosCondC-Bold', 29), ('AdventureC', 7), ('SchoolBookC-Bold', 6), ('CourierNewPSMT', 4), ('HeliosCondC-BoldItalic', 3), ('TimesNewRomanPS-BoldItal', 2), ('GaramondC', 1), ('SchoolBookC', 1), ('Calibri-Bold', 1), ('SchoolBookC-BoldItalic', 1)]
+HEADLINES (>=14pt):
+   34.0 SchoolBookC-Bold               y= 70.9 x= 83.0  ╨Я╤А╨╛ ╨б╨╛╤З╨╕
+   20.0 AdventureC                     y=198.2 x=159.7  ╨Ь╤Г╨┤╤А╨╛╤Б╤В╤М
+   16.3 TimesNewRomanPS-BoldItal       y= 13.6 x= 29.7  ╨б╨╕╨▒╨╕╤А╤Б╨║╨░╤П
+   16.3 TimesNewRomanPS-BoldItal       y= 13.6 x= 29.7  ╨б╨╕╨▒╨╕╤А╤Б╨║╨░╤П
+   15.5 HeliosCondC                    y=237.6 x= 20.6  ╨У╨Р╨Ч╨Х╨в╨Р ╨а╨Р╨б╨Я╨а╨Ю╨б╨в╨а╨Р╨Э╨п╨Х╨в╨б╨п ╨Т ╨в╨Р╨в╨Р╨а╨б╨Ъ╨Х, ╨з╨Р╨Э╨Р╨е, ╨г╨б╨в╨м-╨в╨Р╨а╨Ъ╨Х
+   15.3 HeliosCondC-Bold               y=155.9 x=122.4  ╨в╨╡╨╗╨╡╤Д╨╛╨╜╤Л
+   14.0 AdventureC                     y= 15.2 x=157.3  ╨Ч╨░╨╜╨╕╨╝╨░╤В╨╡╨╗╤М╨╜╤Л╨╡ ╤Д╨░╨║╤В╤Л
+RUBRICS/kicker (Helios):
+   10.0 HeliosCondC-Bold               y=256.3  ╨в╨╡╨╗╨╡╤Д╨╛╨╜ ╤А╨╡╨┤╨░╨║╤Ж╨╕╨╕: 24-446.
+    9.0 HeliosCondC-Bold               y=124.6  *╨Ь-456.
+    9.0 HeliosCondC                    y=124.6  ╨Ь╤Г╨╢╤З╨╕╨╜╨░
+    9.0 HeliosCondC                    y=128.4  ╨▒╨╡╨╖ ╨▓/╨┐ ╨╢╨╡╨╗╨░╨╡╤В ╨┐╨╛╨╖╨╜╨░-
+    9.0 HeliosCondC                    y=132.3  ╨║╨╛╨╝╨╕╤В╤М╤Б╤П ╤Б ╨╢╨╡╨╜╤Й╨╕╨╜╨╛╨╣
+    9.0 HeliosCondC                    y=136.1  ╨┤╨╗╤П ╤Б╨╡╤А╤М╨╡╨╖╨╜╤Л╤Е ╨╛╤В╨╜╨╛╤И╨╡╨╜╨╕╨╣.
+    9.0 HeliosCondC-Bold               y=139.9  *╨Ь-506.
+    9.0 HeliosCondC                    y=139.9  ╨Ь╨╜╨╡ 47 ╨╗╨╡╤В, ╨╕╨╜╨▓╨░╨╗╨╕╨┤ 2-╨╣ ╨│╤А╤Г╨┐╨┐╤Л,
+    9.0 HeliosCondC                    y=143.7  ╤Б╨┐╨╛╨║╨╛╨╣╨╜╤Л╨╣ ╨╝╤Г╨╢╤З╨╕╨╜╨░. ╨Ш╤Й╤Г ╤Б╨▓╨╛╤О ╨┐╨╛╨╗╨╛╨▓╨╕╨╜╨║╤Г
+    9.0 HeliosCondC                    y=147.5  ╨╗╨╡╤В 36-44, ╨╢╨╡╨╗╨░╤В╨╡╨╗╤М╨╜╨╛ ╤Б ╨╕╨╜╨▓╨░╨╗╨╕╨┤╨╜╨╛╤Б╤В╤М╤О, ╤Б╨┐╨╛-
+    9.0 HeliosCondC                    y=151.3  ╨║╨╛╨╣╨╜╤Г╤О, ╨▒╨╡╨╖ ╨▓╤А╨╡╨┤╨╜╤Л╤Е ╨┐╤А╨╕╨▓╤Л╤З╨╡╨║.
+    9.0 HeliosCondC-Bold               y=155.1  *╨Ь-510.
+IMAGES (top 8):
+body median pt: 9.00
+  lead x~18.34 mm median pt: 10.80
+  lead x~32.81 mm median pt: 8.00
+  lead x~81.84 mm median pt: 10.80
+  lead x~95.25 mm median pt: 10.80
+wrote C:\Users\╨Р╨╗╨╡╨║╤Б╨░╨╜╨┤╤А\PycharmProjects\disign_auto\examples\_analysis\002_Okolica_027.txt (132 lines)
+wrote C:\Users\╨Р╨╗╨╡╨║╤Б╨░╨╜╨┤╤А\PycharmProjects\disign_auto\examples\_analysis\001_Okolica_027.txt (19 lines)
+wrote C:\Users\╨Р╨╗╨╡╨║╤Б╨░╨╜╨┤╤А\PycharmProjects\disign_auto\examples\_analysis\004_Okolica_027.txt (106 lines)

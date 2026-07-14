@@ -197,13 +197,13 @@ async function loadFonts() {
       const cat = byCat[f.category] ? f.category : "other";
       byCat[cat].push(f);
     }
-    fillSelect("font_serif", [...byCat.serif, ...byCat.other]);
-    fillSelect("font_sans", [...byCat.sans, ...byCat.other]);
-    fillSelect("font_display", [...byCat.display, ...byCat.sans, ...byCat.other]);
+    fillSelect("font_serif", [...byCat.serif, ...byCat.other], "SchoolBookC");
+    fillSelect("font_sans", [...byCat.sans, ...byCat.other], "HeliosCondC");
+    fillSelect("font_display", [...byCat.display, ...byCat.sans, ...byCat.other], "AdventureC");
   } catch (_) { /* fonts optional */ }
 }
 
-function fillSelect(id, fonts) {
+function fillSelect(id, fonts, preferredPs) {
   const sel = document.getElementById(id);
   const seen = new Set();
   for (const f of fonts) {
@@ -213,6 +213,12 @@ function fillSelect(id, fonts) {
     opt.value = f.postscript_name;
     opt.textContent = `${f.family} (${f.style})`;
     sel.appendChild(opt);
+  }
+  if (preferredPs) {
+    const hit = [...sel.options].find(
+      o => o.value === preferredPs || o.value.startsWith(preferredPs)
+    );
+    if (hit) sel.value = hit.value;
   }
 }
 

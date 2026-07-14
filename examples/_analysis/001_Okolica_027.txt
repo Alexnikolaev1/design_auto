@@ -1,0 +1,19 @@
+y=  23.0 x= 14.3 w=  3.6 sz=  9.0 HeliosCondC-Bold         | №27 (1313) / 15 ИЮЛЯ, 2026 Г.
+y= 121.1 x= 20.3 w= 36.7 sz= 24.0 AdventureC               | • Дарить
+y= 130.5 x= 20.3 w= 23.7 sz= 24.0 AdventureC               | заботу
+y=  91.9 x= 20.3 w= 34.7 sz= 24.0 AdventureC               | • Дорогой
+y= 101.4 x= 20.3 w= 27.1 sz= 24.0 AdventureC               | подарок
+y=  91.9 x= 20.3 w= 34.7 sz= 24.0 AdventureC               | • Дорогой
+y=  66.5 x= 20.3 w= 37.3 sz= 24.0 AdventureC               | • Берегите
+y=  76.0 x= 20.3 w= 22.1 sz= 24.0 AdventureC               | бензин
+y= 144.2 x= 20.8 w= 25.5 sz= 15.0 AdventureC               | Стр. 12-13
+y= 121.1 x= 20.3 w= 36.7 sz= 24.0 AdventureC               | • Дарить
+y= 101.4 x= 20.3 w= 27.1 sz= 24.0 AdventureC               | подарок
+y= 110.4 x= 37.7 w= 19.6 sz= 15.0 AdventureC               | Стр. 6-7
+y=  78.7 x= 48.0 w= 14.9 sz= 15.0 AdventureC               | Стр. 3
+y=  66.5 x= 20.3 w= 37.3 sz= 24.0 AdventureC               | • Берегите
+y=  76.0 x= 20.3 w= 22.1 sz= 24.0 AdventureC               | бензин
+y=  66.5 x= 20.3 w= 37.3 sz= 24.0 AdventureC               | • Берегите
+y=  76.0 x= 20.3 w= 22.1 sz= 24.0 AdventureC               | бензин
+y=  66.5 x= 20.3 w= 37.3 sz= 24.0 AdventureC               | • Берегите
+y=  20.6 x=191.1 w=  8.5 sz= 18.4 Impact                   | 16+

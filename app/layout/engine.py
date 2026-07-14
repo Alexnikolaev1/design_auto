@@ -19,6 +19,10 @@ from app.layout.text_flow import (
     ColumnObstacle, flow_runs_into_lines, obstacle_bottom,
 )
 from app.analysis.reference_pdf import AdSlot
+from app.layout.newspaper import (
+    is_newspaper_template, refine_photo_role, newspaper_image_rect,
+    stroke_pt_for_role, masthead_reserve_pt,
+)
 
 
 @dataclass
@@ -42,6 +46,7 @@ class ImageFrame:
     text_wrap: bool = False
     wrap_side: str = "both"  # left | right | both
     element_id: str = ""
+    stroke_pt: float = 0.0
 
 
 @dataclass
@@ -144,6 +149,14 @@ def _pick_dominant_color(images: list) -> tuple[int, int, int]:
         return (max(0, r - 30), max(0, g - 30), max(0, b - 30))
     except Exception:
         return (0x1F, 0x3A, 0x5F)
+
+
+def _accent_for_template(template: TemplateSpec, parsed: ParsedDocument) -> tuple[int, int, int]:
+    """Для «Околицы» — фирменный красный заголовок; иначе цвет с фото."""
+    if template.id == "okolica-news":
+        from app.layout.okolica_profile import ACCENT_HEADLINE_RGB
+        return ACCENT_HEADLINE_RGB
+    return _pick_dominant_color(parsed.images)
 
 
 def _nearest_heading(blocks: list[Block], up_to: int) -> str:
@@ -281,11 +294,22 @@ def build_layout(
         nonlocal content
         content = content_for(cur_page.index)
 
-    cur_page = new_page(drop_cap=(template.accent_style == "tint_block"))
+    cur_page = new_page(drop_cap=(template.accent_style == "tint_block" and not is_newspaper_template(template)))
     sync_content()
     col_i = 0
-    y_cursor = {i: cur_page.columns[i].rect.y for i in range(len(cur_page.columns))}
+    newspaper = is_newspaper_template(template)
+    gutter_pt = template.gutter_mm * MM_TO_PT
+
+    def _base_y() -> float:
+        y0 = cur_page.columns[0].rect.y
+        if newspaper:
+            return y0 + masthead_reserve_pt()
+        return y0
+
+    y_cursor = {i: _base_y() for i in range(len(cur_page.columns))}
     first_body_on_page = True
+    awaiting_lead_photo = True
+    awaiting_lead_para = False
     block_index = 0
 
     def col_bottom(i: int) -> float:
@@ -294,8 +318,10 @@ def build_layout(
     def page_has_content() -> bool:
         if cur_page.images or cur_page.preview_lines:
             return True
-        col0 = cur_page.columns[0].rect.y
-        return any(y_cursor[i] > col0 + 2 for i in y_cursor)
+        return any(y_cursor[i] > _base_y() + 2 for i in y_cursor)
+
+    def _reset_cursors() -> dict[int, float]:
+        return {i: _base_y() for i in range(len(cur_page.columns))}
 
     def goto_page(target: int) -> None:
         nonlocal cur_page, col_i, y_cursor, first_body_on_page
@@ -304,7 +330,7 @@ def build_layout(
             sync_content()
             col_i = 0
             first_body_on_page = True
-            y_cursor = {i: cur_page.columns[i].rect.y for i in range(len(cur_page.columns))}
+            y_cursor = _reset_cursors()
 
     def force_new_page() -> None:
         nonlocal cur_page, col_i, y_cursor, first_body_on_page
@@ -314,7 +340,7 @@ def build_layout(
         sync_content()
         col_i = 0
         first_body_on_page = True
-        y_cursor = {i: cur_page.columns[i].rect.y for i in range(len(cur_page.columns))}
+        y_cursor = _reset_cursors()
 
     def _append_jump_line(from_page: Page, col_idx: int, target_human_page: int) -> None:
         if not profile.jump_lines or target_human_page < 2:
@@ -345,7 +371,7 @@ def build_layout(
                 sync_content()
                 col_i = 0
                 first_body_on_page = True
-                y_cursor = {i: cur_page.columns[i].rect.y for i in range(len(cur_page.columns))}
+                y_cursor = _reset_cursors()
             return
         if y_cursor[col_i] + needed <= col_bottom(col_i):
             return
@@ -359,7 +385,7 @@ def build_layout(
             sync_content()
             col_i = 0
             first_body_on_page = True
-            y_cursor = {i: cur_page.columns[i].rect.y for i in range(len(cur_page.columns))}
+            y_cursor = _reset_cursors()
 
     def place_text_block(block: Block, style: str) -> None:
         nonlocal col_i, y_cursor, first_body_on_page, block_index
@@ -447,6 +473,10 @@ def build_layout(
         if block.kind == "heading" and block.level == 1 and profile.heading_starts_new_page:
             force_new_page()
 
+        if block.kind == "heading" and block.level <= 2:
+            awaiting_lead_photo = True
+            awaiting_lead_para = True
+
         if block.kind == "image" and block.image_index is not None:
             role = block.image_role
             if block.image_index < len(parsed.images):
@@ -458,6 +488,15 @@ def build_layout(
             text_wrap = False
             wrap_side = "both"
             float_side = "left" if image_counter % 2 == 0 else "right"
+            stroke = 0.0
+
+            if newspaper and not is_ad_role(role) and not is_banner_role(role) and role != "logo":
+                role = refine_photo_role(
+                    role, img_path, fname,
+                    first_after_heading=awaiting_lead_photo,
+                )
+                if role == "lead":
+                    awaiting_lead_photo = False
 
             if is_ad_role(role):
                 w_mm = block.width_mm or (img_meta.width_mm if img_meta else None)
@@ -488,6 +527,7 @@ def build_layout(
                 col_i = 0
                 text_wrap = True
                 wrap_side = "both"
+                stroke = stroke_pt_for_role(role)
             elif is_banner_role(role):
                 y = max(y_cursor.values())
                 img_rect = _image_rect_for_strategy(
@@ -499,6 +539,32 @@ def build_layout(
                 for i in y_cursor:
                     y_cursor[i] = img_rect.y + img_rect.h + gap
                 col_i = 0
+            elif newspaper:
+                # Газетные размеры: lead на 2 кол., фото на всю колонку (не 44%)
+                y = max(y_cursor.values()) if role in ("lead", "mid") else y_cursor[col_i]
+                n_cols = len(cur_page.columns)
+                col_w = cur_page.columns[0].rect.w
+                x, y, w, h = newspaper_image_rect(
+                    content_x=content.x, content_w=content.w, y=y,
+                    col_w=col_w, gutter_pt=gutter_pt, n_cols=n_cols,
+                    role=role, img_path=img_path, page_height_pt=ph,
+                    col_x=col.rect.x,
+                )
+                if role not in ("lead", "mid"):
+                    x = col.rect.x
+                    y = y_cursor[col_i]
+                img_rect = Rect(x, y, w, h)
+                gap = 10
+                if role in ("lead", "mid"):
+                    for i in y_cursor:
+                        y_cursor[i] = max(y_cursor[i], img_rect.y + img_rect.h + gap)
+                    # текст основной статьи — с колонок под lead (1..n)
+                    col_i = 1 if n_cols >= 3 else 0
+                else:
+                    y_cursor[col_i] = img_rect.y + img_rect.h + gap
+                text_wrap = True
+                wrap_side = "both"
+                stroke = stroke_pt_for_role(role)
             elif template.image_strategy in ("column_span", "banner_strip") and content is not None:
                 y = max(y_cursor.values())
                 img_rect = _image_rect_for_strategy(
@@ -558,6 +624,7 @@ def build_layout(
                 show_ad_label=profile.mark_advertising and is_ad_role(role),
                 text_wrap=text_wrap,
                 wrap_side=wrap_side,
+                stroke_pt=stroke,
             ))
             if block.caption:
                 cap_block = Block(kind="caption", runs=[Run(text=block.caption, italic=True)])
@@ -583,6 +650,36 @@ def build_layout(
 
         style = f"h{block.level}" if block.kind == "heading" else (
             "list" if block.kind == "list_item" else "body")
+        if (
+            newspaper
+            and style == "body"
+            and awaiting_lead_para
+            and block.kind == "body"
+        ):
+            style = "lead"
+            awaiting_lead_para = False
+            # лид на ширину 2 колонок: временно расширяем
+            if len(cur_page.columns) >= 2:
+                col = cur_page.columns[col_i if col_i < len(cur_page.columns) else 0]
+                # place across 2 cols by using wider measure
+                wide_w = col.rect.w * 2 + gutter_pt
+                ensure_space(template.body_leading_pt * 3)
+                obstacles = column_obstacles.get(col_i, [])
+                lead_runs = [Run(text=r.text, bold=True, italic=r.italic) for r in block.runs] or block.runs
+                flow_lines, end_y = flow_runs_into_lines(
+                    lead_runs, "lead", template, col_i, wide_w,
+                    y_cursor[col_i], obstacles, _pil_font_loader,
+                    hyphenate=profile.hyphenation,
+                    language=profile.language,
+                )
+                cur_page.preview_lines.extend(_flow_to_preview(flow_lines))
+                y_cursor[col_i] = end_y
+                if col_i + 1 < len(cur_page.columns):
+                    y_cursor[col_i + 1] = max(y_cursor[col_i + 1], end_y)
+                first_body_on_page = False
+                block_index += 1
+                continue
+
         place_text_block(block, style)
         block_index += 1
 
@@ -591,7 +688,7 @@ def build_layout(
 
     plan = LayoutPlan(
         template=template, profile=profile, pages=pages,
-        dominant_accent_rgb=_pick_dominant_color(parsed.images),
+        dominant_accent_rgb=_accent_for_template(template, parsed),
         keywords=extract_keywords(parsed.full_text),
         page_width_pt=pw,
         page_height_pt=ph,

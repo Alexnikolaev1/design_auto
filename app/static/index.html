@@ -85,11 +85,11 @@
 
       <div class="tab-content active" id="tab-margins">
         <div class="profile-grid">
-          <label>Margin Top, мм <input type="number" id="margin_top_mm" value="6" step="0.5" min="3" max="60"></label>
-          <label>Margin Bottom, мм <input type="number" id="margin_bottom_mm" value="7" step="0.5" min="3" max="60"></label>
-          <label>Margin Inside, мм <input type="number" id="margin_inside_mm" value="8" step="0.5" min="3" max="60"></label>
-          <label>Margin Outside, мм <input type="number" id="margin_outside_mm" value="10" step="0.5" min="3" max="60"></label>
-          <label>Columns (Number) <input type="number" id="columns_count" value="4" step="1" min="1" max="12"></label>
+          <label>Margin Top, мм <input type="number" id="margin_top_mm" value="14" step="0.5" min="3" max="60"></label>
+          <label>Margin Bottom, мм <input type="number" id="margin_bottom_mm" value="14" step="0.5" min="3" max="60"></label>
+          <label>Margin Inside, мм <input type="number" id="margin_inside_mm" value="18" step="0.5" min="3" max="60"></label>
+          <label>Margin Outside, мм <input type="number" id="margin_outside_mm" value="16" step="0.5" min="3" max="60"></label>
+          <label>Columns (Number) <input type="number" id="columns_count" value="3" step="1" min="1" max="12"></label>
           <label>Gutter, мм <input type="number" id="column_gutter_mm" value="3.5" step="0.1" min="0" max="30"></label>
           <label>Вылет (bleed), мм <input type="number" id="bleed_mm" value="3" step="0.5" min="0" max="15"></label>
           <label>Цветовой профиль
@@ -103,6 +103,7 @@
           </label>
           <label>Формат полосы
             <select id="page_format">
+              <option value="okolica" selected>Околица (221.6×288.6 мм)</option>
               <option value="a4">A4 (210×297 мм)</option>
               <option value="tabloid">Таблоид (280×430 мм)</option>
               <option value="newspaper_broadsheet">Газета (315×470 мм)</option>
@@ -110,11 +111,11 @@
             </select>
           </label>
           <div id="customSizeRow" class="custom-size-row" hidden>
-            <label>Ширина, мм <input type="number" id="custom_page_width_mm" value="260" step="1" min="100" max="600"></label>
-            <label>Высота, мм <input type="number" id="custom_page_height_mm" value="400" step="1" min="100" max="900"></label>
+            <label>Ширина, мм <input type="number" id="custom_page_width_mm" value="221.58" step="0.01" min="100" max="600"></label>
+            <label>Высота, мм <input type="number" id="custom_page_height_mm" value="288.58" step="0.01" min="100" max="900"></label>
           </div>
           <label class="checkbox"><input type="checkbox" id="facing_pages"> Разворотные страницы (газетный блок)</label>
-          <label class="checkbox"><input type="checkbox" id="heading_starts_new_page"> Заголовок H1 с новой полосы</label>
+          <label class="checkbox"><input type="checkbox" id="heading_starts_new_page" checked> Заголовок H1 с новой полосы</label>
           <label class="checkbox"><input type="checkbox" id="print_marks"> Печатные метки (обрез, приводка, шкалы)</label>
         </div>
       </div>
@@ -149,7 +150,7 @@
       </div>
 
       <div class="tab-content" id="tab-fonts">
-        <p class="tab-hint">Укажите 2–3 основных шрифта. Если не выбрано — используются шаблонные (PT Serif / PT Sans / Montserrat) или системные.</p>
+        <p class="tab-hint">По умолчанию: Helios Cond (текст), SchoolBook (заголовки), Adventure (рубрики) — шрифты «Околицы». Можно сменить.</p>
         <div class="profile-grid">
           <label>Антиква (serif)
             <select id="font_serif"><option value="">— авто —</option></select>
