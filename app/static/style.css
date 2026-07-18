@@ -553,6 +553,44 @@ body {
   color: var(--muted);
 }
 
+.kit-panel { border: 1px solid #c4b5a0; background: linear-gradient(180deg, #fffdf8 0%, #fff 40%); }
+.kit-brief-label { display: block; margin: 12px 0 8px; font-size: 0.9rem; }
+.kit-brief-label textarea {
+  display: block; width: 100%; margin-top: 6px; padding: 10px 12px;
+  border: 1px solid #d6d3d1; border-radius: 8px; font: inherit; resize: vertical;
+}
+.kit-ai-check { margin: 8px 0 12px; }
+.kit-mode-row { margin: 10px 0 14px; }
+.kit-block-label { margin: 10px 0 6px; font-size: 0.85rem; font-weight: 600; color: #57534e; }
+.kit-docx-label input[type="file"] { display: block; margin-top: 6px; font-size: 0.85rem; }
+.kit-preview-extras { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.kit-preview-sm { max-width: 140px; border: 1px solid #e7e5e4; border-radius: 6px; }
+.kit-texts-edit { margin-top: 12px; }
+.kit-texts-edit summary { cursor: pointer; font-weight: 600; color: #57534e; }
+.kit-ads-block { margin: 8px 0; }
+.kit-scenes-block { margin-bottom: 10px; }
+.kit-scene-chip { border-color: #a16207; }
+.kit-elements-details { margin: 8px 0 4px; }
+.kit-elements-details > summary {
+  cursor: pointer; font-size: 0.9rem; color: #57534e; padding: 4px 0;
+}
+.kit-chip { cursor: pointer; user-select: none; }
+.kit-chip input { margin-right: 4px; }
+.actions-row { margin: 12px 0; }
+.kit-results { margin-top: 16px; }
+.kit-preview {
+  max-width: 100%; border: 1px solid #e7e5e4; border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.06);
+}
+.kit-download-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-top: 12px; }
+.experiment-panel { margin-top: 28px; opacity: 0.95; }
+.experiment-panel > summary {
+  font-size: 1rem; font-weight: 600; cursor: pointer; padding: 8px 0; color: #57534e;
+}
+.status-box { margin-top: 12px; padding: 12px; background: #f5f5f4; border-radius: 8px; }
+.status-box .progress { height: 6px; background: #e7e5e4; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+.status-box .progress-fill { height: 100%; width: 0; background: #a16207; transition: width .2s; }
+
 @media (max-width: 600px) {
   .hero-inner { flex-direction: column; text-align: center; }
   .upload-grid { grid-template-columns: 1fr; }

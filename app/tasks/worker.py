@@ -656,3 +656,362 @@ _README_TXT = """LayoutGenius — макет для Adobe InDesign CS3
 
 ЭКСПОРТ: File → Adobe PDF Presets → High Quality Print.
 """
+
+def process_kit_job(
+    job_id: str,
+    brief: str = "",
+    use_ai: bool = True,
+    include: list[str] | None = None,
+    scene_id: str | None = None,
+    mode: str = "auto",
+    texts: dict | None = None,
+    scene_ids: list[str] | None = None,
+    ad_format_id: str | None = None,
+    source_text: str = "",
+    texts_by_scene: dict | None = None,
+) -> None:
+    """
+    CS3 Element Kit / Issue Pack / Ad format.
+    mode: auto|scene|catalog|issue|ad
+    """
+    from app.kit.compose import compose_kit_selection
+    from app.kit.brand import list_element_ids
+    from app.kit.preview import render_kit_preview_png
+    from app.kit.checklist import format_kit_checklist
+    from app.kit.preflight import run_kit_preflight
+    from app.kit.scenes import get_scene
+    from app.kit.issue_pack import plan_issue_pack, format_media_manifest
+    from app.kit.ads import get_ad_format, format_ad_rate_card
+    from app.kit.cs3_guarantee import run_cs3_open_guarantee, format_open_guarantee
+    from app.inx.kit_generator import build_kit_inx
+    from app.layout.okolica_profile import (
+        FONT_BODY, FONT_BODY_BOLD, FONT_BODY_ITALIC, FONT_HEADLINE, FONT_RUBRIC,
+    )
+
+    d = _job_dir(job_id)
+    downloads = d / "downloads"
+    previews = d / "previews" / "kit"
+    downloads.mkdir(exist_ok=True)
+    previews.mkdir(parents=True, exist_ok=True)
+
+    # DOCX из папки job (если загружен)
+    source = (source_text or "").strip()
+    if not source:
+        for cand in (d / "source.docx", d / "source.doc"):
+            if cand.exists():
+                try:
+                    docx_path = ensure_docx(cand)
+                    parsed = parse_docx(docx_path, d / "inline_images")
+                    source = parsed.full_text
+                except Exception:
+                    pass
+                break
+
+    mode = (mode or "auto").lower()
+    if mode == "auto":
+        if ad_format_id:
+            mode = "ad"
+        elif scene_ids:
+            mode = "issue"
+        elif scene_id:
+            mode = "scene"
+        elif include:
+            mode = "catalog"
+        elif source or brief:
+            mode = "issue"
+        else:
+            mode = "catalog"
+
+    try:
+        _write_status(job_id, "composing", kind="kit", mode=mode)
+        font_manager.scan_fonts(force=True)
+        used_ps = {FONT_BODY, FONT_BODY_BOLD, FONT_BODY_ITALIC, FONT_HEADLINE, FONT_RUBRIC}
+        font_files = font_manager.collect_used_font_paths(used_ps)
+        guarantee_reports = []
+        preview_pages = []
+        results = []
+        compose_source = "rules"
+        pack_texts_out = {}
+
+        # ---------- ISSUE PACK ----------
+        if mode == "issue":
+            plan = plan_issue_pack(
+                brief=brief,
+                source_text=source or brief,
+                use_ai=use_ai,
+                scene_ids=scene_ids,
+                texts_overrides=texts_by_scene,
+            )
+            compose_source = plan.scenes[0].source if plan.scenes else "rules"
+            scenes_dir = downloads / "scenes"
+            scenes_dir.mkdir(exist_ok=True)
+            all_include = set()
+            checklist_parts = []
+
+            for sp in plan.scenes:
+                sc = get_scene(sp.scene_id)
+                if not sc:
+                    continue
+                # merge flat texts override
+                scene_texts = dict(sp.texts)
+                if texts:
+                    scene_texts.update({k: str(v) for k, v in texts.items() if str(v).strip()})
+                pack_texts_out[sp.scene_id] = scene_texts
+                all_include.update(sc.elements)
+
+                inx_bytes = build_kit_inx(
+                    include=list(sc.elements), texts=scene_texts, scene_id=sp.scene_id,
+                )
+                inx_name = f"{sp.scene_id}.inx"
+                (scenes_dir / inx_name).write_bytes(inx_bytes)
+
+                g = run_cs3_open_guarantee(inx_bytes, include=list(sc.elements), label=sp.scene_id)
+                guarantee_reports.append(g)
+
+                prev = previews / f"{sp.scene_id}.png"
+                render_kit_preview_png(list(sc.elements), scene_texts, prev, scene_id=sp.scene_id)
+                preview_pages.append(f"/api/jobs/{job_id}/preview/kit/{sp.scene_id}.png")
+                results.append({
+                    "template_id": sp.scene_id,
+                    "template_name": sc.name,
+                    "description": sc.description,
+                    "preview_pages": [f"/api/jobs/{job_id}/preview/kit/{sp.scene_id}.png"],
+                    "download_url": f"/api/jobs/{job_id}/download/okolica_kit",
+                })
+                pf = run_kit_preflight(inx_bytes, include=list(sc.elements))
+                checklist_parts.append(format_kit_checklist(
+                    list(sc.elements), source=sp.source, smoke_ok=g.passed,
+                    inx_bytes=inx_bytes, scene_id=sp.scene_id, preflight=pf,
+                ))
+
+            # primary preview = first scene
+            if plan.scenes:
+                first = plan.scenes[0].scene_id
+                primary_prev = previews / "catalog.png"
+                shutil.copy2(previews / f"{first}.png", primary_prev)
+            else:
+                primary_prev = previews / "catalog.png"
+                primary_prev.write_bytes(b"")
+
+            guarantee_txt = format_open_guarantee(guarantee_reports, pack_label="Issue Pack")
+            (downloads / "cs3_open_guarantee.txt").write_text(guarantee_txt, encoding="utf-8")
+            (downloads / "media_manifest.txt").write_text(
+                format_media_manifest(plan.media_slots), encoding="utf-8",
+            )
+            (downloads / "ad_rate_card.txt").write_text(format_ad_rate_card(), encoding="utf-8")
+            checklist = (
+                "ISSUE PACK — СВОДНЫЙ ЧЕКЛИСТ\n"
+                + "=" * 40 + "\n\n"
+                + "\n\n".join(checklist_parts)
+            )
+            (downloads / "print_checklist.txt").write_text(checklist, encoding="utf-8")
+            (downloads / "issue_plan.json").write_text(
+                json.dumps(plan.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8",
+            )
+
+            readme = (
+                "ОКОЛИЦА ISSUE PACK (LayoutGenius 3.3)\n"
+                "=====================================\n\n"
+                "scenes/*.inx          — готовые сцены (Group → Copy/Paste)\n"
+                "cs3_open_guarantee.txt — гарантия открытия CS3\n"
+                "media_manifest.txt    — слоты фото → Links/\n"
+                "ad_rate_card.txt      — прайс рекламных форматов\n"
+                "print_checklist.txt   — preflight по каждой сцене\n"
+                "Fonts/                — фирменные шрифты\n\n"
+                "1. Установите Fonts/\n"
+                "2. Откройте нужную сцену .inx в InDesign CS3\n"
+                "3. Выделите Group → Copy → Paste на рабочую полосу\n"
+                "4. Place фото по media_manifest.txt\n"
+            )
+            (downloads / "README.txt").write_text(readme, encoding="utf-8")
+
+            zip_path = downloads / "okolica_kit.zip"
+            with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+                for p in scenes_dir.glob("*.inx"):
+                    zf.write(p, arcname=f"scenes/{p.name}")
+                for name in (
+                    "README.txt", "print_checklist.txt", "cs3_open_guarantee.txt",
+                    "media_manifest.txt", "ad_rate_card.txt", "issue_plan.json",
+                ):
+                    zf.write(downloads / name, arcname=name)
+                if (previews / "catalog.png").exists():
+                    zf.write(previews / "catalog.png", arcname="previews/catalog.png")
+                for p in previews.glob("scene_*.png"):
+                    zf.write(p, arcname=f"previews/{p.name}")
+                for ps_name, fpath in font_files:
+                    zf.write(fpath, arcname=f"Fonts/{fpath.name}")
+
+            all_pass = all(g.passed for g in guarantee_reports) if guarantee_reports else False
+            _write_status(
+                job_id, "done", kind="kit", mode="issue",
+                include=sorted(all_include),
+                compose_source=compose_source,
+                scene_ids=[s.scene_id for s in plan.scenes],
+                texts_by_scene=pack_texts_out,
+                media_slots=plan.media_slots,
+                open_guarantee={"passed": all_pass, "files": len(guarantee_reports)},
+                preview_url=f"/api/jobs/{job_id}/preview/kit/catalog.png",
+                download_url=f"/api/jobs/{job_id}/download/okolica_kit",
+                checklist_url=f"/api/jobs/{job_id}/kit/checklist",
+                guarantee_url=f"/api/jobs/{job_id}/kit/guarantee",
+                results=results,
+                preview_pages=preview_pages,
+            )
+            return
+
+        # ---------- AD FORMAT ----------
+        if mode == "ad" or ad_format_id:
+            fmt = get_ad_format(ad_format_id or "ad_row")
+            if not fmt:
+                raise ValueError(f"Неизвестный ad_format_id: {ad_format_id}")
+            ad_texts = {
+                "ad_body_wide": f"{fmt.name}\n{fmt.description}",
+                "ad_price": f"ориентир {fmt.price_hint_rub} ₽ · {fmt.area_cm2} см²",
+                **(texts or {}),
+            }
+            inx_bytes = build_kit_inx(
+                include=list(fmt.elements), texts=ad_texts, ad_format_id=fmt.id,
+            )
+            include_ids = list(fmt.elements)
+            resolved_scene = None
+            compose_source = "ad_format"
+            pack_label = fmt.name
+        else:
+            # ---------- SCENE / CATALOG ----------
+            scene = get_scene(scene_id) if scene_id else None
+            if scene is not None:
+                selection = compose_kit_selection(
+                    brief or source[:500], use_ai=use_ai, scene_id=scene.id,
+                )
+            elif include:
+                valid = set(list_element_ids())
+                picked = [i for i in include if i in valid]
+                base = compose_kit_selection(brief or source[:500], use_ai=use_ai, scene_id=None)
+                selection = {
+                    "include": picked or base["include"],
+                    "texts": base.get("texts") or {},
+                    "source": "manual" if not use_ai else base.get("source", "rules"),
+                    "scene_id": None,
+                }
+            else:
+                selection = compose_kit_selection(
+                    brief or source[:500], use_ai=use_ai, scene_id=scene_id,
+                )
+
+            include_ids = selection["include"]
+            scene_texts = selection.get("texts") or {}
+            if texts:
+                scene_texts.update({k: str(v) for k, v in texts.items() if str(v).strip()})
+            # from source for single scene
+            if source and selection.get("scene_id"):
+                from app.kit.issue_pack import fill_scene_texts_from_source, _split_articles
+                scene_texts = fill_scene_texts_from_source(
+                    selection["scene_id"], brief, source,
+                    _split_articles(source), scene_texts,
+                )
+                if texts:
+                    scene_texts.update({k: str(v) for k, v in texts.items() if str(v).strip()})
+
+            compose_source = selection.get("source", "rules")
+            resolved_scene = selection.get("scene_id") or scene_id
+            inx_bytes = build_kit_inx(
+                include=include_ids, texts=scene_texts, scene_id=resolved_scene,
+            )
+            pack_label = resolved_scene or "catalog"
+            ad_texts = scene_texts
+
+        inx_path = downloads / "okolica_kit.inx"
+        inx_path.write_bytes(inx_bytes)
+
+        smoke = smoke_test_inx(inx_bytes)
+        try:
+            validate_inx(inx_bytes)
+            inx_valid = True
+        except InxValidationError as e:
+            inx_valid = False
+            smoke.warnings.append(f"validate_inx: {e}")
+
+        preflight = run_kit_preflight(inx_bytes, include=include_ids)
+        g = run_cs3_open_guarantee(inx_bytes, include=include_ids, label=pack_label)
+        guarantee_reports = [g]
+        (downloads / "cs3_open_guarantee.txt").write_text(
+            format_open_guarantee(guarantee_reports, pack_label=pack_label), encoding="utf-8",
+        )
+        (downloads / "ad_rate_card.txt").write_text(format_ad_rate_card(), encoding="utf-8")
+        (downloads / "media_manifest.txt").write_text(
+            format_media_manifest(
+                [{"id": "lead_photo", "frame": "kit_article_photo_frame",
+                  "hint": "Place CMYK ≥300 dpi → kit_article_photo_frame",
+                  "caption_key": "photo_caption"}]
+                if "article_photo_frame" in include_ids else []
+            ),
+            encoding="utf-8",
+        )
+
+        preview_path = previews / "catalog.png"
+        render_kit_preview_png(
+            include_ids, ad_texts if mode == "ad" or ad_format_id else scene_texts,
+            preview_path,
+            scene_id=resolved_scene if mode != "ad" else None,
+        )
+
+        checklist = format_kit_checklist(
+            include_ids, source=compose_source, smoke_ok=smoke.passed and inx_valid and g.passed,
+            inx_bytes=inx_bytes, scene_id=resolved_scene, preflight=preflight,
+        )
+        checklist_path = downloads / "print_checklist.txt"
+        checklist_path.write_text(checklist, encoding="utf-8")
+
+        readme = (
+            "ОКОЛИЦА CS3 KIT (LayoutGenius 3.3)\n"
+            "==================================\n\n"
+            f"Режим: {mode}\n"
+            "okolica_kit.inx + cs3_open_guarantee.txt + media_manifest.txt\n"
+            "Fonts/ — установите перед открытием INX\n\n"
+            "Group → Copy → Paste · Overprint Preview · FOGRA39\n"
+        )
+        (downloads / "README.txt").write_text(readme, encoding="utf-8")
+
+        zip_path = downloads / "okolica_kit.zip"
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.write(inx_path, arcname="okolica_kit.inx")
+            for name in (
+                "print_checklist.txt", "README.txt", "cs3_open_guarantee.txt",
+                "media_manifest.txt", "ad_rate_card.txt",
+            ):
+                zf.write(downloads / name, arcname=name)
+            zf.write(preview_path, arcname="previews/catalog.png")
+            for ps_name, fpath in font_files:
+                zf.write(fpath, arcname=f"Fonts/{fpath.name}")
+
+        scene_obj = get_scene(resolved_scene) if resolved_scene else None
+        out_texts = ad_texts if (mode == "ad" or ad_format_id) else scene_texts
+        _write_status(
+            job_id, "done", kind="kit", mode=mode,
+            include=include_ids,
+            compose_source=compose_source,
+            scene_id=resolved_scene,
+            ad_format_id=ad_format_id,
+            texts=out_texts,
+            smoke=smoke.to_dict(),
+            preflight=preflight.to_dict(),
+            open_guarantee=g.to_dict(),
+            inx_valid=inx_valid,
+            preview_url=f"/api/jobs/{job_id}/preview/kit/catalog.png",
+            download_url=f"/api/jobs/{job_id}/download/okolica_kit",
+            checklist_url=f"/api/jobs/{job_id}/kit/checklist",
+            guarantee_url=f"/api/jobs/{job_id}/kit/guarantee",
+            results=[{
+                "template_id": ad_format_id or resolved_scene or "okolica_kit",
+                "template_name": (
+                    get_ad_format(ad_format_id).name if ad_format_id and get_ad_format(ad_format_id)
+                    else (scene_obj.name if scene_obj else "Околица CS3 Kit")
+                ),
+                "description": "Process CMYK CS3 Kit",
+                "preview_pages": [f"/api/jobs/{job_id}/preview/kit/catalog.png"],
+                "download_url": f"/api/jobs/{job_id}/download/okolica_kit",
+            }],
+        )
+    except Exception as exc:
+        traceback.print_exc()
+        _write_status(job_id, "error", kind="kit", error=f"Ошибка кита: {exc}")

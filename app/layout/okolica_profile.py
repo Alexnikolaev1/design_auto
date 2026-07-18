@@ -22,28 +22,31 @@ PAGE_WIDTH_MM = 221.58
 PAGE_HEIGHT_MM = 288.58
 PAGE_FORMAT_ID = "okolica"
 
-# Поля (медиана по текстовым полосам 002/003/004)
-MARGIN_TOP_MM = 14.0
-MARGIN_BOTTOM_MM = 14.0
-MARGIN_INSIDE_MM = 18.0   # у корешка / левое на нечётных
-MARGIN_OUTSIDE_MM = 16.0  # внешнее / правое
+# Поля (медиана по текстовым полосам 002 — examples/_analysis/report.txt)
+MARGIN_TOP_MM = 13.55
+MARGIN_BOTTOM_MM = 14.01
+MARGIN_INSIDE_MM = 18.29
+MARGIN_OUTSIDE_MM = 15.68
 BLEED_MM = 3.0
 
-# Базовая сетка внутренней полосы (как на стр. 2):
-# 1 сайдбар (~61 мм) + 2 текстовые колонки (~57 мм), gutter основной 3.5 мм
+# Базовая сетка внутренней полосы (стр. 2: col left-edges 18.49 / 87.67 / 148.15)
 COLUMNS_COUNT = 3
-COLUMN_GUTTER_MM = 3.5
-SIDEBAR_WIDTH_MM = 61.5
-SIDEBAR_GUTTER_MM = 7.7
-TEXT_COLUMN_WIDTH_MM = 57.0
+COLUMN_GUTTER_MM = 3.49
+SIDEBAR_WIDTH_MM = 61.07
+SIDEBAR_GUTTER_MM = 8.11
+TEXT_COLUMN_WIDTH_MM = 56.99
 
 # --- Типографика (факт из PDF) ---
 BODY_SIZE_PT = 9.0
 BODY_LEADING_PT = 10.8
-H1_SIZE_PT = 36.0          # главный заголовок полосы (красный SchoolBook)
+H1_SIZE_PT = 36.9          # главный заголовок полосы (красный SchoolBook, 002)
 H2_SIZE_PT = 26.0          # вторичный / блочный заголовок
 H3_SIZE_PT = 14.0          # рубрика / kicker (Adventure / cursive)
 LEAD_SIZE_PT = 11.0        # лид (жирный, на ширину 2 кол.)
+NEWS_HEADER_SIZE_PT = 23.9
+LOGO_SIZE_PT = 16.4
+WEATHER_HEADER_SIZE_PT = 25.9
+COVER_TEASER_SIZE_PT = 24.0
 
 # Цвета акцентов (RGB приближённо с полосы)
 ACCENT_HEADLINE_RGB = (196, 30, 30)   # красный заголовок

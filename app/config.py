@@ -27,11 +27,19 @@ MAX_PREVIEW_PAGES = int(os.environ.get("LG_MAX_PREVIEW_PAGES", "32"))
 PDF_EXPORT_DPI = int(os.environ.get("LG_PDF_DPI", "300"))
 JOB_TTL_HOURS = float(os.environ.get("LG_JOB_TTL_HOURS", "48"))
 
-APP_VERSION = "2.7.0"
+APP_VERSION = "3.3.0"
 
 UNSPLASH_ACCESS_KEY = os.environ.get("UNSPLASH_ACCESS_KEY", "")
 PEXELS_API_KEY = os.environ.get("PEXELS_API_KEY", "")
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-me")
+# Бесплатный Gemini: https://aistudio.google.com/apikey
+GEMINI_API_KEY = (
+    os.environ.get("GEMINI_API_KEY")
+    or os.environ.get("LG_GEMINI_API_KEY")
+    or os.environ.get("GOOGLE_API_KEY")
+    or ""
+)
+GEMINI_MODEL = os.environ.get("LG_GEMINI_MODEL", "gemini-2.5-flash")
 
 MM_TO_PT = 72.0 / 25.4
 A4_WIDTH_PT = 210 * MM_TO_PT

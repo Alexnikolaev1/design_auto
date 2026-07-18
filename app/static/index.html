@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LayoutGenius — авто-вёрстка в InDesign CS3</title>
+<title>LayoutGenius — CS3 Element Kit</title>
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -12,12 +12,74 @@
     <div class="logo-mark">LG</div>
     <div>
       <h1>LayoutGenius</h1>
-      <p class="tagline">Профессиональная вёрстка DOC/DOCX → Adobe InDesign CS3 (INX). Пять вариантов макета — выберите лучший.</p>
+      <p class="tagline">Околица CS3 Issue Pack — бриф/DOCX → сцены в ZIP. Groups, Layers, рекламные форматы, CS3 Open Guarantee.</p>
     </div>
   </div>
 </header>
 
 <main class="container">
+  <section id="kit-section" class="panel kit-panel">
+    <h2 class="section-title">Околица CS3 — Issue Pack</h2>
+    <p class="tab-hint">Выпуск из брифа/DOCX → несколько сцен в ZIP. Groups + Layers + Overprint + CS3 Open Guarantee. Рекламные форматы с прайсом.</p>
+
+    <div class="kit-mode-row img-chips-row" id="kitModeChips">
+      <label class="chip kit-chip"><input type="radio" name="kitMode" value="issue" checked> Выпуск (Issue Pack)</label>
+      <label class="chip kit-chip"><input type="radio" name="kitMode" value="scene"> Одна сцена</label>
+      <label class="chip kit-chip"><input type="radio" name="kitMode" value="ad"> Реклама</label>
+      <label class="chip kit-chip"><input type="radio" name="kitMode" value="catalog"> Каталог</label>
+    </div>
+
+    <label class="kit-brief-label">Бриф выпуска
+      <textarea id="kitBrief" rows="2" placeholder="№ 28 / 22 июля 2026 — главная про школу, погода, без лишней рекламы"></textarea>
+    </label>
+    <label class="kit-brief-label">Текст материалов (или вставьте из DOCX)
+      <textarea id="kitSourceText" rows="4" placeholder="Заголовок&#10;&#10;Лид и абзацы…&#10;&#10;Второй материал…"></textarea>
+    </label>
+    <label class="kit-brief-label kit-docx-label">Или загрузите DOCX выпуска
+      <input type="file" id="kitDocxInput" accept=".doc,.docx">
+    </label>
+    <label class="checkbox kit-ai-check"><input type="checkbox" id="kitUseAi" checked> Gemini заполняет тексты (ключ <code>GEMINI_API_KEY</code>)</label>
+
+    <div class="kit-scenes-block" id="kitScenesBlock">
+      <p class="kit-block-label">Сцена (для режима «Одна сцена»)</p>
+      <div id="kitSceneChips" class="img-chips-row"></div>
+    </div>
+    <div class="kit-ads-block" id="kitAdsBlock" hidden>
+      <p class="kit-block-label">Рекламный формат</p>
+      <div id="kitAdChips" class="img-chips-row"></div>
+    </div>
+    <details class="kit-elements-details" id="kitElementsDetails">
+      <summary>Элементы каталога</summary>
+      <div id="kitCatalogChips" class="img-chips-row"></div>
+    </details>
+
+    <div class="actions-row">
+      <button type="button" id="kitGenerateBtn" class="btn-primary">Собрать выпуск / кит</button>
+    </div>
+    <div id="kitStatus" class="status-box" hidden>
+      <p id="kitStatusText">Сборка…</p>
+      <div class="progress"><div id="kitProgressFill" class="progress-fill"></div></div>
+    </div>
+    <div id="kitError" class="error-box" hidden></div>
+    <div id="kitResults" class="kit-results" hidden>
+      <img id="kitPreviewImg" class="kit-preview" alt="Превью">
+      <div id="kitPreviewExtras" class="kit-preview-extras"></div>
+      <details class="kit-texts-edit" id="kitTextsEdit" hidden>
+        <summary>Править тексты и пересобрать</summary>
+        <div id="kitTextFields"></div>
+        <button type="button" id="kitRegenBtn" class="btn-primary">Пересобрать с правками</button>
+      </details>
+      <div class="kit-download-row">
+        <a id="kitDownloadLink" class="btn-primary" href="#">Скачать ZIP</a>
+        <a id="kitChecklistLink" class="btn-link" href="#" target="_blank">Preflight</a>
+        <a id="kitGuaranteeLink" class="btn-link" href="#" target="_blank">CS3 Open Guarantee</a>
+      </div>
+    </div>
+  </section>
+
+  <details id="experiment-autolayout" class="settings-panel experiment-panel">
+    <summary>Эксперимент: автомакет DOCX → 5 вариантов</summary>
+
   <section id="upload-section" class="panel">
     <h2 class="section-title">1. Исходные материалы</h2>
 
@@ -192,6 +254,7 @@
       <span class="btn-label">Сгенерировать 5 вариантов вёрстки</span>
     </button>
   </section>
+  </details>
 
   <section id="status-section" class="panel status-panel" hidden>
     <div class="status-inner">
@@ -293,7 +356,7 @@
 </main>
 
 <footer class="footer">
-  <p>Формат: A4 / таблоид / свой размер · PDF + INX + Links + Fonts</p>
+  <p>InDesign CS3 · Process CMYK · Околица Kit · автомакет — эксперимент</p>
 </footer>
 
 <script src="/static/grid-editor.js"></script>

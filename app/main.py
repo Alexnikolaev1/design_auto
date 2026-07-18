@@ -19,7 +19,7 @@ from starlette.formparsers import MultiPartParser
 from app.config import JOBS_DIR, MAX_UPLOAD_BYTES, TypographyProfile, MAX_IMAGES_PER_JOB, MAX_REFERENCE_PDFS, MAX_ARTICLES_PER_JOB, PAGE_FORMAT_IDS, APP_VERSION
 from app.layout import fonts as font_manager
 from app.layout import grid_templates as grid_tpl
-from app.tasks.worker import process_job, read_status, select_template, rebuild_job, _job_dir
+from app.tasks.worker import process_job, process_kit_job, read_status, select_template, rebuild_job, _job_dir
 from app.nlp.image_matcher import parse_mapping_json
 from app.util.upload_files import save_uploaded_image, write_upload_manifest
 
@@ -157,6 +157,118 @@ def list_page_formats():
 @app.get("/api/health")
 def health():
     return {"status": "ok", "version": APP_VERSION}
+
+
+@app.get("/api/kit/catalog")
+def kit_catalog():
+    """Каталог элементов, сцен, рекламных форматов CS3 Kit."""
+    from app.kit.brand import catalog_as_dicts, BRAND_SWATCHES, COLOR_PROFILE_DEFAULT
+    from app.kit.scenes import list_scenes
+    from app.kit.ads import list_ad_formats
+    return {
+        "elements": catalog_as_dicts(),
+        "scenes": list_scenes(),
+        "ad_formats": list_ad_formats(),
+        "swatches_cmyk": {k: {"c": v[0], "m": v[1], "y": v[2], "k": v[3]} for k, v in BRAND_SWATCHES.items()},
+        "color_profile": COLOR_PROFILE_DEFAULT,
+        "indesign": "CS3 DOMVersion 5.0",
+        "page_mm": {"width": 221.58, "height": 288.58, "bleed": 3.0},
+        "modes": ["issue", "scene", "catalog", "ad"],
+    }
+
+
+class KitGenerateBody(BaseModel):
+    brief: str = ""
+    use_ai: bool = True
+    include: list[str] | None = None
+    scene_id: str | None = None
+    mode: str = "auto"  # auto|issue|scene|catalog|ad
+    texts: dict[str, str] | None = None
+    texts_by_scene: dict[str, dict[str, str]] | None = None
+    scene_ids: list[str] | None = None
+    ad_format_id: str | None = None
+    source_text: str = ""
+
+
+@app.post("/api/kit/generate")
+def generate_kit(background_tasks: BackgroundTasks, body: KitGenerateBody = Body(default=KitGenerateBody())):
+    """Генерация сцены / issue pack / рекламного формата для InDesign CS3."""
+    job_id = uuid.uuid4().hex[:12]
+    _job_dir(job_id)
+    from app.tasks.worker import _write_status
+    _write_status(job_id, "queued", kind="kit")
+    background_tasks.add_task(
+        process_kit_job,
+        job_id,
+        body.brief or "",
+        body.use_ai,
+        body.include,
+        body.scene_id,
+        body.mode or "auto",
+        body.texts,
+        body.scene_ids,
+        body.ad_format_id,
+        body.source_text or "",
+        body.texts_by_scene,
+    )
+    return {
+        "job_id": job_id,
+        "kind": "kit",
+        "status": "queued",
+        "mode": body.mode,
+        "scene_id": body.scene_id,
+    }
+
+
+@app.post("/api/kit/generate-upload")
+async def generate_kit_upload(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    brief: str = Form(""),
+    use_ai: bool = Form(True),
+    mode: str = Form("issue"),
+):
+    """Issue pack из DOCX/DOC + бриф."""
+    job_id = uuid.uuid4().hex[:12]
+    d = _job_dir(job_id)
+    suffix = Path(file.filename or "source.docx").suffix.lower() or ".docx"
+    if suffix not in (".doc", ".docx"):
+        raise HTTPException(400, "Нужен .doc или .docx")
+    dest = d / f"source{suffix}"
+    dest.write_bytes(await file.read())
+    from app.tasks.worker import _write_status
+    _write_status(job_id, "queued", kind="kit", mode=mode or "issue")
+    background_tasks.add_task(
+        process_kit_job,
+        job_id,
+        brief or "",
+        use_ai,
+        None,
+        None,
+        mode or "issue",
+        None,
+        None,
+        None,
+        "",
+        None,
+    )
+    return {"job_id": job_id, "kind": "kit", "status": "queued", "mode": mode or "issue"}
+
+
+@app.get("/api/jobs/{job_id}/kit/checklist")
+def kit_checklist(job_id: str):
+    p = JOBS_DIR / job_id / "downloads" / "print_checklist.txt"
+    if not p.exists():
+        raise HTTPException(404, "Чеклист ещё не готов")
+    return FileResponse(str(p), media_type="text/plain; charset=utf-8", filename="print_checklist.txt")
+
+
+@app.get("/api/jobs/{job_id}/kit/guarantee")
+def kit_guarantee(job_id: str):
+    p = JOBS_DIR / job_id / "downloads" / "cs3_open_guarantee.txt"
+    if not p.exists():
+        raise HTTPException(404, "CS3 Open Guarantee ещё не готов")
+    return FileResponse(str(p), media_type="text/plain; charset=utf-8", filename="cs3_open_guarantee.txt")
 
 
 @app.post("/api/inx/smoke")

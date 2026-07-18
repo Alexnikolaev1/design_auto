@@ -727,3 +727,194 @@ compareModal?.querySelector(".modal-backdrop")?.addEventListener("click", () => 
 
 window.buildMappingPayload = buildMappingPayload;
 window.pollJob = pollJob;
+
+/* ——— CS3 Element Kit / Issue Pack ——— */
+(async function initKitUI() {
+  const genBtn = document.getElementById("kitGenerateBtn");
+  if (!genBtn) return;
+
+  const chips = document.getElementById("kitCatalogChips");
+  const sceneChips = document.getElementById("kitSceneChips");
+  const adChips = document.getElementById("kitAdChips");
+  let lastJobMeta = { mode: "issue", scene_id: null, ad_format_id: null, texts: {} };
+
+  function currentMode() {
+    return document.querySelector('#kitModeChips input[name="kitMode"]:checked')?.value || "issue";
+  }
+
+  function syncModeUI() {
+    const m = currentMode();
+    document.getElementById("kitAdsBlock").hidden = m !== "ad";
+    document.getElementById("kitScenesBlock").hidden = m === "ad";
+    document.getElementById("kitElementsDetails").hidden = m !== "catalog";
+  }
+  document.getElementById("kitModeChips")?.addEventListener("change", syncModeUI);
+  syncModeUI();
+
+  try {
+    const resp = await fetch("/api/kit/catalog");
+    const data = await resp.json();
+    if (sceneChips && data.scenes) {
+      sceneChips.innerHTML = data.scenes.map((s, i) =>
+        `<label class="chip kit-chip kit-scene-chip" title="${escapeHtml(s.description || "")}">` +
+        `<input type="radio" name="kitScene" value="${escapeHtml(s.id)}" ${i === 0 ? "checked" : ""}> ${escapeHtml(s.name)}</label>`
+      ).join("");
+    }
+    if (adChips && data.ad_formats) {
+      adChips.innerHTML = data.ad_formats.map((f, i) =>
+        `<label class="chip kit-chip" title="${escapeHtml(f.description || "")}">` +
+        `<input type="radio" name="kitAd" value="${escapeHtml(f.id)}" ${i === 0 ? "checked" : ""}> ` +
+        `${escapeHtml(f.name)} · ${f.area_cm2} см² · ~${f.price_hint_rub}₽</label>`
+      ).join("");
+    }
+    if (chips && data.elements) {
+      chips.innerHTML = data.elements.map(e =>
+        `<label class="chip kit-chip"><input type="checkbox" data-eid="${e.id}" ${e.default_include ? "checked" : ""}> ${escapeHtml(e.name)}</label>`
+      ).join("");
+    }
+  } catch (_) { /* optional */ }
+
+  function collectTextsFromForm() {
+    const texts = {};
+    document.querySelectorAll("#kitTextFields [data-tkey]").forEach(el => {
+      if (el.value && el.value.trim()) texts[el.dataset.tkey] = el.value.trim();
+    });
+    return texts;
+  }
+
+  function renderTextFields(texts) {
+    const box = document.getElementById("kitTextFields");
+    const wrap = document.getElementById("kitTextsEdit");
+    if (!box || !wrap || !texts || !Object.keys(texts).length) {
+      if (wrap) wrap.hidden = true;
+      return;
+    }
+    wrap.hidden = false;
+    const keys = Object.keys(texts).slice(0, 16);
+    box.innerHTML = keys.map(k =>
+      `<label class="kit-brief-label">${escapeHtml(k)}` +
+      `<textarea data-tkey="${escapeHtml(k)}" rows="2">${escapeHtml(String(texts[k] || ""))}</textarea></label>`
+    ).join("");
+  }
+
+  async function runGenerate(extra = {}) {
+    const statusEl = document.getElementById("kitStatus");
+    const statusTextEl = document.getElementById("kitStatusText");
+    const progressEl = document.getElementById("kitProgressFill");
+    const errEl = document.getElementById("kitError");
+    const resultsEl = document.getElementById("kitResults");
+    errEl.hidden = true;
+    resultsEl.hidden = true;
+    statusEl.hidden = false;
+    statusTextEl.textContent = "Сборка…";
+    progressEl.style.width = "15%";
+    genBtn.disabled = true;
+
+    const mode = extra.mode || currentMode();
+    const sceneRadio = document.querySelector('#kitSceneChips input[name="kitScene"]:checked');
+    const adRadio = document.querySelector('#kitAdChips input[name="kitAd"]:checked');
+    const include = [...document.querySelectorAll("#kitCatalogChips input[data-eid]:checked")]
+      .map(el => el.dataset.eid);
+    const docxInput = document.getElementById("kitDocxInput");
+    const hasDocx = docxInput?.files?.length > 0 && mode === "issue";
+
+    try {
+      let job_id;
+      if (hasDocx) {
+        const fd = new FormData();
+        fd.append("file", docxInput.files[0]);
+        fd.append("brief", document.getElementById("kitBrief")?.value || "");
+        fd.append("use_ai", document.getElementById("kitUseAi")?.checked ?? true);
+        fd.append("mode", "issue");
+        const resp = await fetch("/api/kit/generate-upload", { method: "POST", body: fd });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          throw new Error(err.detail ? JSON.stringify(err.detail) : `HTTP ${resp.status}`);
+        }
+        job_id = (await resp.json()).job_id;
+      } else {
+        const body = {
+          brief: document.getElementById("kitBrief")?.value || "",
+          source_text: document.getElementById("kitSourceText")?.value || "",
+          use_ai: document.getElementById("kitUseAi")?.checked ?? true,
+          mode,
+          scene_id: mode === "scene" && sceneRadio ? sceneRadio.value : null,
+          ad_format_id: mode === "ad" && adRadio ? adRadio.value : null,
+          include: mode === "catalog" && include.length ? include : null,
+          texts: extra.texts || collectTextsFromForm(),
+          ...extra,
+        };
+        if (body.texts && !Object.keys(body.texts).length) body.texts = null;
+        const resp = await fetch("/api/kit/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          throw new Error(err.detail ? JSON.stringify(err.detail) : `HTTP ${resp.status}`);
+        }
+        job_id = (await resp.json()).job_id;
+      }
+      progressEl.style.width = "35%";
+
+      for (let i = 0; i < 120; i++) {
+        await new Promise(r => setTimeout(r, 400));
+        const st = await fetch(`/api/jobs/${job_id}`).then(r => r.json());
+        statusTextEl.textContent = st.status === "done" ? "Готово" : `Статус: ${st.status}`;
+        progressEl.style.width = `${Math.min(90, 35 + i)}%`;
+        if (st.status === "error") throw new Error(st.error || "Ошибка сборки");
+        if (st.status === "done") {
+          progressEl.style.width = "100%";
+          document.getElementById("kitPreviewImg").src =
+            st.preview_url || `/api/jobs/${job_id}/preview/kit/catalog.png`;
+          document.getElementById("kitDownloadLink").href =
+            st.download_url || `/api/jobs/${job_id}/download/okolica_kit`;
+          document.getElementById("kitChecklistLink").href =
+            st.checklist_url || `/api/jobs/${job_id}/kit/checklist`;
+          const gLink = document.getElementById("kitGuaranteeLink");
+          if (gLink) gLink.href = st.guarantee_url || `/api/jobs/${job_id}/kit/guarantee`;
+
+          const extras = document.getElementById("kitPreviewExtras");
+          if (extras && st.preview_pages?.length > 1) {
+            extras.innerHTML = st.preview_pages.slice(1, 6).map(u =>
+              `<img class="kit-preview kit-preview-sm" src="${u}" alt="сцена">`
+            ).join("");
+          } else if (extras) extras.innerHTML = "";
+
+          const texts = st.texts || (st.texts_by_scene && Object.values(st.texts_by_scene)[0]) || {};
+          lastJobMeta = {
+            mode: st.mode || mode,
+            scene_id: st.scene_id || null,
+            ad_format_id: st.ad_format_id || null,
+            texts,
+            scene_ids: st.scene_ids || null,
+          };
+          renderTextFields(texts);
+
+          resultsEl.hidden = false;
+          statusEl.hidden = true;
+          break;
+        }
+      }
+    } catch (e) {
+      errEl.hidden = false;
+      errEl.textContent = e.message || String(e);
+      statusEl.hidden = true;
+    } finally {
+      genBtn.disabled = false;
+    }
+  }
+
+  genBtn.addEventListener("click", () => runGenerate());
+  document.getElementById("kitRegenBtn")?.addEventListener("click", () => {
+    runGenerate({
+      mode: lastJobMeta.mode === "issue" ? "scene" : lastJobMeta.mode,
+      scene_id: lastJobMeta.scene_id,
+      ad_format_id: lastJobMeta.ad_format_id,
+      texts: collectTextsFromForm(),
+      scene_ids: null,
+    });
+  });
+})();
+
