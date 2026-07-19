@@ -957,17 +957,17 @@ def process_kit_job(
         checklist_path = downloads / "print_checklist.txt"
         checklist_path.write_text(checklist, encoding="utf-8")
 
-            readme = (
-                "ОКОЛИЦА CS3 MODULE KIT (LayoutGenius 4.0)\n"
-                "=========================================\n\n"
-                f"Режим: {mode}\n"
-                "Помощник дизайнеру: модули Group для Copy/Paste.\n"
-                "okolica_kit.inx + cs3_open_guarantee.txt + Fonts/\n\n"
-                "1. Установите Fonts/\n"
-                "2. Open INX в InDesign CS3\n"
-                "3. Выделите Group → Copy → Paste на свою полосу\n"
-                "4. Свой текст и фото ставите вы\n"
-            )
+        readme = (
+            "ОКОЛИЦА CS3 MODULE KIT (LayoutGenius 4.0)\n"
+            "=========================================\n\n"
+            f"Режим: {mode}\n"
+            "Помощник дизайнеру: модули Group для Copy/Paste.\n"
+            "okolica_kit.inx + cs3_open_guarantee.txt + Fonts/\n\n"
+            "1. Установите Fonts/\n"
+            "2. Open INX в InDesign CS3\n"
+            "3. Выделите Group → Copy → Paste на свою полосу\n"
+            "4. Свой текст и фото ставите вы\n"
+        )
         (downloads / "README.txt").write_text(readme, encoding="utf-8")
 
         zip_path = downloads / "okolica_kit.zip"
