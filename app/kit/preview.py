@@ -64,6 +64,17 @@ def render_kit_preview_png(
     head_f = _font(FONT_HEADLINE, max(14, int(18 * scale)))
     rub_f = _font(FONT_RUBRIC, max(10, int(11 * scale)))
 
+    decor = {"decor_rule", "decor_corners", "decor_wave_border", "decor_divider"}
+    core = want - {"styles_pack", "folio_line"}
+    is_ornament = bool(core) and core <= decor and len(core & decor) >= 3
+    is_backdrop = core == {"decor_wave_border", "decor_corners"}
+
+    if is_ornament or is_backdrop:
+        return _render_ornament_preview(
+            img, draw, mx, my, pw, ph, mm, scale, rgb, small, rub_f, texts or {},
+            backdrop=is_backdrop, out_path=out_path,
+        )
+
     title = "Сцена: " + scene.name if scene else "Околица CS3 Kit · Process CMYK · превью"
     draw.text((mx, mm(3)), title, font=small, fill=rgb("OkolicaGray"))
 
@@ -182,6 +193,137 @@ def render_kit_preview_png(
         draw.text((mx, ph - mm(8)),
                   "Стили: Заголовок 1–2 · Рубрика · Лид · Основной · Подпись · Реклама · Folio",
                   font=small, fill=rgb("OkolicaGray"))
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    img.save(out_path, "PNG")
+    return out_path
+
+
+def _render_ornament_preview(
+    img, draw, mx, my, pw, ph, mm, scale, rgb, small, rub_f, texts, *,
+    backdrop: bool, out_path: Path,
+) -> Path:
+    import math
+    purple = rgb("OkolicaPurple")
+    orange = rgb("OkolicaOrange")
+    teal = rgb("OkolicaTeal")
+    red = rgb("OkolicaRed")
+    gray = rgb("OkolicaGray")
+    caption = texts.get("wave_caption", "В эти дни")
+    cw = pw - mx - mm(geo.MARGIN_R)
+
+    title = "Подложки" if backdrop else "Полоса узоров Околицы"
+    draw.text((mx, mm(4)), title, font=small, fill=gray)
+
+    def wave(x, y, w, amp=None, periods=6, color=purple, width=2):
+        amp = amp if amp is not None else mm(2.2)
+        pts = []
+        segs = 40
+        for i in range(segs + 1):
+            t = i / segs
+            pts.append((x + w * t, y + amp * math.sin(t * math.pi * 2 * periods)))
+        draw.line(pts, fill=color, width=width)
+
+    def scallop(x, y, w, n=10):
+        step = w / n
+        for i in range(n):
+            cx = x + step * (i + 0.5)
+            r = step * 0.4
+            bbox = [cx - r, y - r, cx + r, y + r]
+            draw.arc(bbox, 180, 360, fill=purple, width=2)
+
+    def diamonds(x, y, w, n=10):
+        step = w / n
+        s = step * 0.25
+        for i in range(n):
+            cx = x + step * (i + 0.5)
+            col = red if i % 2 == 0 else purple
+            draw.polygon([(cx, y - s), (cx + s, y), (cx, y + s), (cx - s, y)], outline=col)
+
+    def rosette(cx, cy, r, petals=8):
+        for i in range(petals):
+            ang = 2 * math.pi * i / petals
+            draw.line(
+                [cx + r * 0.2 * math.cos(ang), cy + r * 0.2 * math.sin(ang),
+                 cx + r * math.cos(ang), cy + r * math.sin(ang)],
+                fill=purple, width=2,
+            )
+        draw.ellipse([cx - r * 0.2, cy - r * 0.2, cx + r * 0.2, cy + r * 0.2], outline=orange, width=2)
+
+    if backdrop:
+        y = my + mm(10)
+        draw.rectangle([mx, y, mx + cw, y + mm(50)], outline=purple, width=3)
+        wave(mx + mm(6), y + mm(6), cw - mm(12), periods=7)
+        scallop(mx + mm(6), y + mm(44), cw - mm(12), n=12)
+        draw.text((mx + mm(20), y + mm(20)), caption, font=rub_f, fill=purple)
+        y2 = y + mm(60)
+        draw.rectangle([mx, y2, mx + mm(85), y2 + mm(36)], fill=rgb("OkolicaOrangeTint"), outline=orange, width=2)
+        draw.text((mx + mm(8), y2 + mm(12)), caption, font=rub_f, fill=orange)
+        draw.rectangle([mx + mm(95), y2, mx + mm(180), y2 + mm(36)], outline=teal, width=2)
+        wave(mx + mm(100), y2 + mm(10), mm(70), color=teal, periods=5)
+        draw.text((mx + mm(105), y2 + mm(16)), caption, font=rub_f, fill=teal)
+    else:
+        y = my + mm(8)
+        labels = [
+            "1. Двойная волна", "2. Фестоны", "3. Меандр", "4. Ромбы",
+            "5. Разделители", "6. Розетки", "7. Уголки", "8. Рамка", "9. Комбо",
+        ]
+        # 1 wave
+        draw.text((mx, y), labels[0], font=small, fill=gray)
+        wave(mx, y + mm(5), cw, color=purple)
+        wave(mx, y + mm(7.5), cw, amp=mm(1.8), color=orange, width=1)
+        y += mm(14)
+        # 2 scallop
+        draw.text((mx, y), labels[1], font=small, fill=gray)
+        scallop(mx, y + mm(8), cw, n=12)
+        y += mm(16)
+        # 3 greek-ish
+        draw.text((mx, y), labels[2], font=small, fill=gray)
+        cell = mm(6)
+        for i in range(int(cw / cell)):
+            ox = mx + i * cell
+            draw.rectangle([ox, y + mm(4), ox + cell * 0.5, y + mm(9)], outline=purple, width=1)
+        y += mm(14)
+        # 4 diamonds
+        draw.text((mx, y), labels[3], font=small, fill=gray)
+        diamonds(mx, y + mm(7), cw, n=12)
+        y += mm(14)
+        # 5 rules
+        draw.text((mx, y), labels[4], font=small, fill=gray)
+        draw.line([mx, y + mm(5), mx + cw, y + mm(5)], fill=(0, 0, 0), width=2)
+        draw.line([mx, y + mm(7), mx + cw, y + mm(7)], fill=(0, 0, 0), width=1)
+        draw.line([mx, y + mm(8.5), mx + cw, y + mm(8.5)], fill=(0, 0, 0), width=1)
+        y += mm(14)
+        # 6 rosettes
+        draw.text((mx, y), labels[5], font=small, fill=gray)
+        for i, rr in enumerate((11, 9, 10, 8, 9)):
+            rosette(mx + mm(18 + i * 32), y + mm(14), mm(rr))
+        y += mm(30)
+        # 7 corners
+        draw.text((mx, y), labels[6], font=small, fill=gray)
+        arm = mm(6)
+        bx, by = mx, y + mm(5)
+        for a, b in (
+            ((bx, by + arm), (bx, by)), ((bx, by), (bx + arm, by)),
+            ((bx + mm(24) - arm, by), (bx + mm(24), by)),
+            ((bx + mm(24), by), (bx + mm(24), by + arm)),
+        ):
+            draw.line([*a, *b], fill=purple, width=2)
+        # vine
+        draw.line([mx + mm(50), y + mm(5), mx + mm(50), y + mm(28)], fill=teal, width=2)
+        y += mm(34)
+        # 8 frame
+        draw.text((mx, y), labels[7], font=small, fill=gray)
+        draw.rectangle([mx, y + mm(5), mx + mm(160), y + mm(40)], outline=purple, width=3)
+        wave(mx + mm(8), y + mm(10), mm(144), periods=8)
+        scallop(mx + mm(8), y + mm(36), mm(144), n=10)
+        draw.text((mx + mm(40), y + mm(18)), caption, font=rub_f, fill=purple)
+        y += mm(48)
+        # 9 combo
+        draw.text((mx, y), labels[8], font=small, fill=gray)
+        wave(mx, y + mm(6), cw, periods=8)
+        diamonds(mx, y + mm(12), cw, n=14)
+        scallop(mx, y + mm(20), cw, n=14)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(out_path, "PNG")

@@ -298,6 +298,12 @@ def build_kit_inx(
     elif scene is not None:
         with _group(ctx, f"SCENE · {scene.name}", "kit_scene"):
             _layout_scene(ctx, scene.id)
+    elif _is_backdrop_pack(include_set):
+        with _group(ctx, "Подложка", "kit_backdrop_page"):
+            _layout_backdrop_page(ctx)
+    elif _is_ornament_pack(include_set):
+        with _group(ctx, "Полоса узоров", "kit_ornament_page"):
+            _layout_ornament_page(ctx)
     else:
         _layout_catalog(ctx)
 
@@ -498,25 +504,344 @@ def _corners(ctx: _Ctx, x: float, y: float, box_w: float, box_h: float) -> None:
               name="kit_decor_corners" if i == 0 else "")
 
 
-def _wave_border(ctx: _Ctx, x: float, y: float, w: float, h: float, caption: str) -> None:
-    _rect(ctx, x, y, w, h, fill=ctx.paper, stroke=ctx.purple,
-          stroke_w=geo.WAVE_BORDER_STROKE, self_id="Rectangle/kit_decor_wave_border",
-          name="kit_decor_wave_border", object_style="Kit Wave Box")
-    segs = 10
-    amp = _mm(2.2)
-    for edge_y, flip in ((y + _mm(4), 1), (y + h - _mm(4), -1)):
-        for i in range(segs):
-            t0, t1 = i / segs, (i + 1) / segs
-            x0 = x + _mm(3) + (w - _mm(6)) * t0
-            x1 = x + _mm(3) + (w - _mm(6)) * t1
-            y0 = edge_y + flip * amp * math.sin(t0 * math.pi * 4)
-            y1 = edge_y + flip * amp * math.sin(t1 * math.pi * 4)
-            _line(ctx, x0, y0, x1, y1, ctx.purple, 0.55)
+def _polyline(ctx: _Ctx, pts: list[tuple[float, float]], stroke: str, weight: float = 0.6,
+              self_id: str = "", name: str = "") -> None:
+    for i in range(len(pts) - 1):
+        sid = self_id if i == 0 else ""
+        nm = name if i == 0 else ""
+        _line(ctx, pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1],
+              stroke, weight, self_id=sid, name=nm)
+
+
+def _orn_label(ctx: _Ctx, x: float, y: float, text: str) -> None:
+    _text_frame(ctx, x, y, _mm(90), _mm(4), text, "Метка каталога", ctx.gray,
+                name=f"orn_lbl_{_uid()}")
+
+
+def _wave_line(ctx: _Ctx, x: float, y: float, w: float, *,
+               amp: float | None = None, periods: float = 5, stroke: str | None = None,
+               weight: float = 0.7, segs: int = 28) -> None:
+    stroke = stroke or ctx.purple
+    amp = amp if amp is not None else _mm(2.4)
+    pts = []
+    for i in range(segs + 1):
+        t = i / segs
+        pts.append((x + w * t, y + amp * math.sin(t * math.pi * 2 * periods)))
+    _polyline(ctx, pts, stroke, weight)
+
+
+def _double_wave(ctx: _Ctx, x: float, y: float, w: float) -> None:
+    _wave_line(ctx, x, y, w, amp=_mm(2.8), periods=6, weight=0.85)
+    _wave_line(ctx, x, y + _mm(2.2), w, amp=_mm(2.0), periods=6, weight=0.55, stroke=ctx.orange)
+
+
+def _scallop_edge(ctx: _Ctx, x: float, y: float, w: float, n: int = 8) -> None:
+    """Гирлянда-фестон (дуги из коротких хорд)."""
+    step = w / n
+    for i in range(n):
+        cx = x + step * (i + 0.5)
+        r = step * 0.42
+        pts = []
+        for k in range(9):
+            ang = math.pi + (math.pi * k / 8)
+            pts.append((cx + r * math.cos(ang), y + r * math.sin(ang)))
+        _polyline(ctx, pts, ctx.purple, 0.65)
+
+
+def _greek_key(ctx: _Ctx, x: float, y: float, w: float, cell: float | None = None) -> None:
+    cell = cell or _mm(5.5)
+    n = max(3, int(w / cell))
+    h = cell * 0.85
+    for i in range(n):
+        ox = x + i * cell
+        pts = [
+            (ox, y + h), (ox, y), (ox + cell * 0.55, y),
+            (ox + cell * 0.55, y + h * 0.55), (ox + cell * 0.25, y + h * 0.55),
+            (ox + cell * 0.25, y + h * 0.28), (ox + cell * 0.75, y + h * 0.28),
+            (ox + cell * 0.75, y + h), (ox + cell, y + h),
+        ]
+        _polyline(ctx, pts, ctx.purple, 0.7)
+
+
+def _diamond_chain(ctx: _Ctx, x: float, y: float, w: float, n: int = 9) -> None:
+    step = w / n
+    s = step * 0.28
+    for i in range(n):
+        cx = x + step * (i + 0.5)
+        pts = [(cx, y - s), (cx + s, y), (cx, y + s), (cx - s, y), (cx, y - s)]
+        _polyline(ctx, pts, ctx.red if i % 2 == 0 else ctx.purple, 0.75)
+        if i < n - 1:
+            _line(ctx, cx + s, y, cx + step - s, y, ctx.gray, 0.4)
+
+
+def _rosette(ctx: _Ctx, cx: float, cy: float, r: float, petals: int = 8) -> None:
+    for i in range(petals):
+        ang = (2 * math.pi * i) / petals
+        x1 = cx + r * 0.25 * math.cos(ang)
+        y1 = cy + r * 0.25 * math.sin(ang)
+        x2 = cx + r * math.cos(ang)
+        y2 = cy + r * math.sin(ang)
+        _line(ctx, x1, y1, x2, y2, ctx.purple, 0.7)
+        # tip diamond
+        tx, ty = x2, y2
+        d = r * 0.12
+        perp = ang + math.pi / 2
+        _polyline(ctx, [
+            (tx, ty),
+            (tx + d * math.cos(perp), ty + d * math.sin(perp)),
+            (tx + d * 1.4 * math.cos(ang), ty + d * 1.4 * math.sin(ang)),
+            (tx - d * math.cos(perp), ty - d * math.sin(perp)),
+            (tx, ty),
+        ], ctx.orange, 0.5)
+    # center ring approx
+    for i in range(12):
+        a0 = 2 * math.pi * i / 12
+        a1 = 2 * math.pi * (i + 1) / 12
+        rr = r * 0.22
+        _line(ctx, cx + rr * math.cos(a0), cy + rr * math.sin(a0),
+              cx + rr * math.cos(a1), cy + rr * math.sin(a1), ctx.purple, 0.55)
+
+
+def _flourish_corner(ctx: _Ctx, x: float, y: float, size: float, *,
+                     flip_x: int = 1, flip_y: int = 1) -> None:
+    """Угловой завиток (полилиния)."""
+    s = size
+    fx, fy = flip_x, flip_y
+    pts = [
+        (x, y),
+        (x + fx * s * 0.15, y),
+        (x + fx * s * 0.35, y + fy * s * 0.08),
+        (x + fx * s * 0.55, y + fy * s * 0.05),
+        (x + fx * s * 0.7, y + fy * s * 0.25),
+        (x + fx * s * 0.55, y + fy * s * 0.45),
+        (x + fx * s * 0.35, y + fy * s * 0.4),
+        (x + fx * s * 0.25, y + fy * s * 0.55),
+        (x + fx * s * 0.45, y + fy * s * 0.75),
+        (x + fx * s * 0.2, y + fy * s * 0.9),
+        (x, y + fy * s * 0.7),
+        (x, y + fy * s * 0.35),
+    ]
+    _polyline(ctx, pts, ctx.purple, 0.85)
+    # inner echo
+    pts2 = [
+        (x + fx * s * 0.08, y + fy * s * 0.12),
+        (x + fx * s * 0.28, y + fy * s * 0.18),
+        (x + fx * s * 0.4, y + fy * s * 0.35),
+        (x + fx * s * 0.22, y + fy * s * 0.5),
+        (x + fx * s * 0.08, y + fy * s * 0.35),
+    ]
+    _polyline(ctx, pts2, ctx.orange, 0.5)
+
+
+def _vine_strip(ctx: _Ctx, x: float, y: float, h: float, leaves: int = 7) -> None:
+    _line(ctx, x, y, x, y + h, ctx.purple, 0.7)
+    step = h / leaves
+    for i in range(leaves):
+        cy = y + step * (i + 0.5)
+        side = 1 if i % 2 == 0 else -1
+        leaf = [
+            (x, cy),
+            (x + side * _mm(3), cy - _mm(1.2)),
+            (x + side * _mm(6), cy),
+            (x + side * _mm(3), cy + _mm(1.2)),
+            (x, cy),
+        ]
+        _polyline(ctx, leaf, ctx.teal if i % 3 == 0 else ctx.purple, 0.55)
+
+
+def _ornate_frame(ctx: _Ctx, x: float, y: float, w: float, h: float, caption: str) -> None:
+    # outer
+    _rect(ctx, x, y, w, h, fill=ctx.paper, stroke=ctx.purple, stroke_w=1.4,
+          self_id="Rectangle/kit_decor_wave_border", name="kit_decor_wave_border",
+          object_style="Kit Wave Box")
+    # inner
+    inset = _mm(3)
+    _rect(ctx, x + inset, y + inset, w - 2 * inset, h - 2 * inset,
+          fill=None, stroke=ctx.orange, stroke_w=0.6)
+    # scallops on long edges
+    _scallop_edge(ctx, x + _mm(4), y + _mm(2.5), w - _mm(8), n=10)
+    _scallop_edge(ctx, x + _mm(4), y + h - _mm(2.5), w - _mm(8), n=10)
+    # corner flourishes
+    fs = _mm(10)
+    _flourish_corner(ctx, x + _mm(2), y + _mm(2), fs, flip_x=1, flip_y=1)
+    _flourish_corner(ctx, x + w - _mm(2), y + _mm(2), fs, flip_x=-1, flip_y=1)
+    _flourish_corner(ctx, x + _mm(2), y + h - _mm(2), fs, flip_x=1, flip_y=-1)
+    _flourish_corner(ctx, x + w - _mm(2), y + h - _mm(2), fs, flip_x=-1, flip_y=-1)
     _text_frame(
-        ctx, x + _mm(4), y + h / 2 - _mm(4), w - _mm(8), _mm(8),
+        ctx, x + _mm(8), y + h / 2 - _mm(5), w - _mm(16), _mm(10),
         caption, "Рубрика", ctx.purple, fill_override=ctx.purple,
         self_story_tag="kit_wave_caption", name="kit_wave_caption", overprint=False,
     )
+
+
+def _wave_border(ctx: _Ctx, x: float, y: float, w: float, h: float, caption: str) -> None:
+    _ornate_frame(ctx, x, y, w, h, caption)
+
+
+def _star_burst(ctx: _Ctx, cx: float, cy: float, r: float, rays: int = 12) -> None:
+    for i in range(rays):
+        ang = 2 * math.pi * i / rays
+        r0 = r * (0.35 if i % 2 == 0 else 0.2)
+        _line(ctx, cx + r0 * math.cos(ang), cy + r0 * math.sin(ang),
+              cx + r * math.cos(ang), cy + r * math.sin(ang),
+              ctx.orange if i % 2 else ctx.purple, 0.6)
+
+
+def _is_ornament_pack(include_set: set[str] | None) -> bool:
+    if not include_set:
+        return False
+    decor = {"decor_rule", "decor_corners", "decor_wave_border", "decor_divider"}
+    core = include_set - {"styles_pack", "folio_line"}
+    return bool(core) and core <= decor and len(core & decor) >= 3
+
+
+def _is_backdrop_pack(include_set: set[str] | None) -> bool:
+    if not include_set:
+        return False
+    core = include_set - {"styles_pack", "folio_line"}
+    return core == {"decor_wave_border", "decor_corners"}
+
+
+def _layout_ornament_page(ctx: _Ctx) -> None:
+    """Целая полоса разнообразных узоров для Copy/Paste по группам."""
+    mx = _mm(geo.MARGIN_L)
+    my = _mm(geo.MARGIN_T)
+    content_w = ctx.page_w - mx - _mm(geo.MARGIN_R)
+    caption = ctx.texts.get("wave_caption", "В эти дни")
+
+    _set_layer(ctx, "kit_guides")
+    _text_frame(
+        ctx, mx, my - _mm(2), content_w, _mm(6),
+        "Полоса узоров Околицы · каждый блок — отдельный Group · Copy/Paste",
+        "Метка каталога", ctx.gray, name="kit_ornament_title",
+    )
+
+    _set_layer(ctx, "kit_decor")
+    y = my + _mm(8)
+
+    # 1. Волны
+    with _group(ctx, "Узор · двойная волна", "orn_wave"):
+        _orn_label(ctx, mx, y, "1. Двойная волна")
+        _double_wave(ctx, mx, y + _mm(6), content_w)
+    y += _mm(16)
+
+    # 2. Фестоны
+    with _group(ctx, "Узор · фестоны", "orn_scallop"):
+        _orn_label(ctx, mx, y, "2. Фестон / гирлянда")
+        _scallop_edge(ctx, mx, y + _mm(8), content_w, n=12)
+        _line(ctx, mx, y + _mm(12), mx + content_w, y + _mm(12), ctx.gray, 0.35)
+    y += _mm(18)
+
+    # 3. Греческий ключ
+    with _group(ctx, "Узор · меандр", "orn_greek"):
+        _orn_label(ctx, mx, y, "3. Меандр (греческий ключ)")
+        _greek_key(ctx, mx, y + _mm(5), content_w)
+    y += _mm(16)
+
+    # 4. Цепь ромбов
+    with _group(ctx, "Узор · ромбы", "orn_diamonds"):
+        _orn_label(ctx, mx, y, "4. Цепь ромбов")
+        _diamond_chain(ctx, mx, y + _mm(8), content_w, n=11)
+    y += _mm(16)
+
+    # 5. Разделители
+    with _group(ctx, "Узор · разделители", "orn_rules"):
+        _orn_label(ctx, mx, y, "5. Разделители")
+        _line(ctx, mx, y + _mm(6), mx + content_w, y + _mm(6), ctx.black, 0.75,
+              self_id="GraphicLine/kit_decor_rule", name="kit_decor_rule")
+        _line(ctx, mx, y + _mm(9), mx + content_w, y + _mm(9), ctx.black, 0.4)
+        _line(ctx, mx, y + _mm(10.5), mx + content_w, y + _mm(10.5), ctx.black, 0.4,
+              self_id="GraphicLine/kit_decor_divider", name="kit_decor_divider")
+        # ornament mid
+        mid = mx + content_w / 2
+        _rosette(ctx, mid, y + _mm(16), _mm(5), petals=6)
+        _line(ctx, mx, y + _mm(16), mid - _mm(7), y + _mm(16), ctx.gray, 0.45)
+        _line(ctx, mid + _mm(7), y + _mm(16), mx + content_w, y + _mm(16), ctx.gray, 0.45)
+    y += _mm(24)
+
+    # 6. Розетки и звёзды в ряд
+    with _group(ctx, "Узор · розетки", "orn_rosettes"):
+        _orn_label(ctx, mx, y, "6. Розетки и звёзды")
+        _rosette(ctx, mx + _mm(18), y + _mm(14), _mm(11), petals=8)
+        _rosette(ctx, mx + _mm(50), y + _mm(14), _mm(9), petals=6)
+        _star_burst(ctx, mx + _mm(82), y + _mm(14), _mm(10), rays=14)
+        _rosette(ctx, mx + _mm(115), y + _mm(14), _mm(8), petals=10)
+        _star_burst(ctx, mx + _mm(150), y + _mm(14), _mm(9), rays=10)
+    y += _mm(32)
+
+    # 7. Уголки + лоза
+    with _group(ctx, "Узор · уголки и лоза", "orn_corners"):
+        _orn_label(ctx, mx, y, "7. Уголки и вертикальная лоза")
+        _corners(ctx, mx, y + _mm(5), _mm(28), _mm(28))
+        _flourish_corner(ctx, mx + _mm(40), y + _mm(5), _mm(14), flip_x=1, flip_y=1)
+        _flourish_corner(ctx, mx + _mm(58), y + _mm(5), _mm(14), flip_x=-1, flip_y=1)
+        _flourish_corner(ctx, mx + _mm(40), y + _mm(22), _mm(14), flip_x=1, flip_y=-1)
+        _flourish_corner(ctx, mx + _mm(58), y + _mm(22), _mm(14), flip_x=-1, flip_y=-1)
+        _vine_strip(ctx, mx + _mm(90), y + _mm(4), _mm(32), leaves=8)
+        _vine_strip(ctx, mx + _mm(105), y + _mm(4), _mm(32), leaves=8)
+    y += _mm(40)
+
+    # 8. Большая рамка «В эти дни»
+    with _group(ctx, "Узор · рамка врезки", "orn_frame"):
+        _orn_label(ctx, mx, y, "8. Рамка врезки / подложка")
+        fw = min(content_w, _mm(170))
+        fh = _mm(42)
+        _ornate_frame(ctx, mx, y + _mm(5), fw, fh, caption)
+    y += _mm(54)
+
+    # 9. Нижний бордюр-комбо
+    with _group(ctx, "Узор · бордюр-комбо", "orn_combo"):
+        _orn_label(ctx, mx, y, "9. Бордюр-комбо (волна + ромбы + фестон)")
+        _wave_line(ctx, mx, y + _mm(6), content_w, periods=8, weight=0.8)
+        _diamond_chain(ctx, mx, y + _mm(14), content_w, n=13)
+        _scallop_edge(ctx, mx, y + _mm(22), content_w, n=14)
+
+    _folio(ctx)
+
+
+def _layout_backdrop_page(ctx: _Ctx) -> None:
+    """Крупная красивая подложка + варианты оттенков."""
+    mx = _mm(geo.MARGIN_L)
+    my = _mm(geo.MARGIN_T)
+    content_w = ctx.page_w - mx - _mm(geo.MARGIN_R)
+    caption = ctx.texts.get("wave_caption", "В эти дни")
+
+    _set_layer(ctx, "kit_guides")
+    _text_frame(
+        ctx, mx, my, content_w, _mm(6),
+        "Подложки · выберите Group → Copy/Paste под врезку или цитату",
+        "Метка каталога", ctx.gray, name="kit_backdrop_title",
+    )
+    _set_layer(ctx, "kit_decor")
+
+    # Main ornate
+    with _group(ctx, "Подложка · основная", "backdrop_main"):
+        _ornate_frame(ctx, mx, my + _mm(12), content_w, _mm(55), caption)
+
+    # Tint variants
+    y = my + _mm(78)
+    with _group(ctx, "Подложка · оранжевая", "backdrop_orange"):
+        _rect(ctx, mx, y, _mm(85), _mm(40), fill=ctx.orange_tint, stroke=ctx.orange, stroke_w=1.0)
+        _scallop_edge(ctx, mx + _mm(3), y + _mm(3), _mm(79), n=7)
+        _text_frame(ctx, mx + _mm(6), y + _mm(14), _mm(73), _mm(12),
+                    caption, "Рубрика", ctx.orange, fill_override=ctx.orange, overprint=False)
+
+    with _group(ctx, "Подложка · бирюзовая", "backdrop_teal"):
+        _rect(ctx, mx + _mm(95), y, _mm(85), _mm(40), fill=ctx.paper, stroke=ctx.teal, stroke_w=1.25)
+        _double_wave(ctx, mx + _mm(100), y + _mm(8), _mm(75))
+        _text_frame(ctx, mx + _mm(100), y + _mm(16), _mm(75), _mm(14),
+                    caption, "Рубрика", ctx.teal, fill_override=ctx.teal, overprint=False)
+
+    y2 = y + _mm(50)
+    with _group(ctx, "Подложка · уголки", "backdrop_corners"):
+        _rect(ctx, mx, y2, content_w, _mm(36), fill=ctx.paper, stroke=ctx.purple, stroke_w=0.5)
+        _corners(ctx, mx + _mm(4), y2 + _mm(4), content_w - _mm(8), _mm(28))
+        _flourish_corner(ctx, mx + _mm(8), y2 + _mm(8), _mm(12), flip_x=1, flip_y=1)
+        _flourish_corner(ctx, mx + content_w - _mm(8), y2 + _mm(8), _mm(12), flip_x=-1, flip_y=1)
+        _text_frame(ctx, mx + _mm(20), y2 + _mm(12), content_w - _mm(40), _mm(12),
+                    caption, "Рубрика", ctx.purple, fill_override=ctx.purple, overprint=False)
+
+    _folio(ctx)
 
 
 def _folio(ctx: _Ctx) -> None:
