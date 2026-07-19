@@ -707,18 +707,13 @@ def process_kit_job(
                     pass
                 break
 
-    mode = (mode or "auto").lower()
-    if mode == "auto":
+    mode = (mode or "catalog").lower()
+    if mode == "auto" or mode == "issue":
+        # Issue Pack больше не основной продукт — сводим к каталогу модулей
         if ad_format_id:
             mode = "ad"
-        elif scene_ids:
-            mode = "issue"
         elif scene_id:
             mode = "scene"
-        elif include:
-            mode = "catalog"
-        elif source or brief:
-            mode = "issue"
         else:
             mode = "catalog"
 
@@ -962,14 +957,17 @@ def process_kit_job(
         checklist_path = downloads / "print_checklist.txt"
         checklist_path.write_text(checklist, encoding="utf-8")
 
-        readme = (
-            "ОКОЛИЦА CS3 KIT (LayoutGenius 3.3)\n"
-            "==================================\n\n"
-            f"Режим: {mode}\n"
-            "okolica_kit.inx + cs3_open_guarantee.txt + media_manifest.txt\n"
-            "Fonts/ — установите перед открытием INX\n\n"
-            "Group → Copy → Paste · Overprint Preview · FOGRA39\n"
-        )
+            readme = (
+                "ОКОЛИЦА CS3 MODULE KIT (LayoutGenius 4.0)\n"
+                "=========================================\n\n"
+                f"Режим: {mode}\n"
+                "Помощник дизайнеру: модули Group для Copy/Paste.\n"
+                "okolica_kit.inx + cs3_open_guarantee.txt + Fonts/\n\n"
+                "1. Установите Fonts/\n"
+                "2. Open INX в InDesign CS3\n"
+                "3. Выделите Group → Copy → Paste на свою полосу\n"
+                "4. Свой текст и фото ставите вы\n"
+            )
         (downloads / "README.txt").write_text(readme, encoding="utf-8")
 
         zip_path = downloads / "okolica_kit.zip"

@@ -3,72 +3,58 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LayoutGenius — CS3 Element Kit</title>
+<title>Околица CS3 Kit — помощник дизайнеру</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
-<header class="hero">
+<body class="kit-app">
+<header class="hero kit-hero">
   <div class="hero-inner">
-    <div class="logo-mark">LG</div>
+    <div class="logo-mark" aria-hidden="true">СО</div>
     <div>
-      <h1>LayoutGenius</h1>
-      <p class="tagline">Околица CS3 Issue Pack — бриф/DOCX → сцены в ZIP. Groups, Layers, рекламные форматы, CS3 Open Guarantee.</p>
+      <p class="hero-eyebrow">LayoutGenius · Adobe InDesign CS3</p>
+      <h1>Сибирская околица</h1>
+      <p class="tagline">Нажмите кнопку — получите готовый модуль (узор, баннер, шапку…). Скопируйте Group в свой макет.</p>
     </div>
   </div>
 </header>
 
-<main class="container">
-  <section id="kit-section" class="panel kit-panel">
-    <h2 class="section-title">Околица CS3 — Issue Pack</h2>
-    <p class="tab-hint">Выпуск из брифа/DOCX → несколько сцен в ZIP. Groups + Layers + Overprint + CS3 Open Guarantee. Рекламные форматы с прайсом.</p>
+<main class="container kit-main">
+  <section id="kit-section" class="panel kit-panel kit-panel-hero">
+    <h2 class="section-title">Что создать?</h2>
+    <p class="tab-hint">Одна кнопка = одна функция. В карточке написано, нужно ли что-то прикладывать.</p>
 
-    <div class="kit-mode-row img-chips-row" id="kitModeChips">
-      <label class="chip kit-chip"><input type="radio" name="kitMode" value="issue" checked> Выпуск (Issue Pack)</label>
-      <label class="chip kit-chip"><input type="radio" name="kitMode" value="scene"> Одна сцена</label>
-      <label class="chip kit-chip"><input type="radio" name="kitMode" value="ad"> Реклама</label>
-      <label class="chip kit-chip"><input type="radio" name="kitMode" value="catalog"> Каталог</label>
+    <div id="kitActionGrid" class="kit-action-grid"></div>
+
+    <div id="kitActionPanel" class="kit-action-panel" hidden>
+      <h3 id="kitSelectedTitle" class="kit-selected-title"></h3>
+      <p id="kitSelectedNeeds" class="kit-selected-needs"></p>
+      <label class="kit-brief-label" id="kitCaptionWrap" hidden>
+        <span id="kitCaptionLabel">Подпись</span>
+        <input type="text" id="kitCaption" placeholder="">
+      </label>
+      <p id="kitPhotoNote" class="kit-photo-note" hidden>
+        После скачивания в CS3: <strong>File → Place</strong> — ваше фото в рамку (≥300 dpi, CMYK).
+      </p>
+      <div class="actions-row">
+        <button type="button" id="kitGenerateBtn" class="btn-primary btn-lg">Создать и скачать</button>
+      </div>
     </div>
 
-    <label class="kit-brief-label">Бриф выпуска
-      <textarea id="kitBrief" rows="2" placeholder="№ 28 / 22 июля 2026 — главная про школу, погода, без лишней рекламы"></textarea>
-    </label>
-    <label class="kit-brief-label">Текст материалов (или вставьте из DOCX)
-      <textarea id="kitSourceText" rows="4" placeholder="Заголовок&#10;&#10;Лид и абзацы…&#10;&#10;Второй материал…"></textarea>
-    </label>
-    <label class="kit-brief-label kit-docx-label">Или загрузите DOCX выпуска
-      <input type="file" id="kitDocxInput" accept=".doc,.docx">
-    </label>
-    <label class="checkbox kit-ai-check"><input type="checkbox" id="kitUseAi" checked> Gemini заполняет тексты (ключ <code>GEMINI_API_KEY</code>)</label>
-
-    <div class="kit-scenes-block" id="kitScenesBlock">
-      <p class="kit-block-label">Сцена (для режима «Одна сцена»)</p>
-      <div id="kitSceneChips" class="img-chips-row"></div>
-    </div>
-    <div class="kit-ads-block" id="kitAdsBlock" hidden>
-      <p class="kit-block-label">Рекламный формат</p>
-      <div id="kitAdChips" class="img-chips-row"></div>
-    </div>
-    <details class="kit-elements-details" id="kitElementsDetails">
-      <summary>Элементы каталога</summary>
-      <div id="kitCatalogChips" class="img-chips-row"></div>
-    </details>
-
-    <div class="actions-row">
-      <button type="button" id="kitGenerateBtn" class="btn-primary">Собрать выпуск / кит</button>
-    </div>
     <div id="kitStatus" class="status-box" hidden>
       <p id="kitStatusText">Сборка…</p>
       <div class="progress"><div id="kitProgressFill" class="progress-fill"></div></div>
     </div>
     <div id="kitError" class="error-box" hidden></div>
+
     <div id="kitResults" class="kit-results" hidden>
+      <div class="kit-result-head">
+        <h3 class="kit-result-title">Готово</h3>
+        <p class="kit-result-hint">ZIP → Fonts/ установить → Open INX → выделить <strong>Group</strong> → Copy → Paste.</p>
+      </div>
       <img id="kitPreviewImg" class="kit-preview" alt="Превью">
-      <div id="kitPreviewExtras" class="kit-preview-extras"></div>
-      <details class="kit-texts-edit" id="kitTextsEdit" hidden>
-        <summary>Править тексты и пересобрать</summary>
-        <div id="kitTextFields"></div>
-        <button type="button" id="kitRegenBtn" class="btn-primary">Пересобрать с правками</button>
-      </details>
       <div class="kit-download-row">
         <a id="kitDownloadLink" class="btn-primary" href="#">Скачать ZIP</a>
         <a id="kitChecklistLink" class="btn-link" href="#" target="_blank">Preflight</a>
@@ -77,290 +63,17 @@
     </div>
   </section>
 
-  <details id="experiment-autolayout" class="settings-panel experiment-panel">
-    <summary>Эксперимент: автомакет DOCX → 5 вариантов</summary>
-
-  <section id="upload-section" class="panel">
-    <h2 class="section-title">1. Исходные материалы</h2>
-
-    <div class="upload-grid">
-      <div class="upload-card">
-        <div id="docDropzone" class="dropzone" data-type="doc">
-          <div class="dz-icon">📄</div>
-          <p><strong>Текстовый документ</strong></p>
-          <p class="hint">Перетащите .doc / .docx или нажмите для выбора</p>
-          <input type="file" id="fileInput" accept=".doc,.docx" hidden>
-        </div>
-        <div id="fileName" class="file-badge" hidden></div>
-        <div id="articlesDropzone" class="dropzone dropzone-secondary" data-type="articles">
-          <div class="dz-icon">📰</div>
-          <p><strong>Дополнительные статьи выпуска</strong> <span class="optional">(необязательно)</span></p>
-          <p class="hint">Ещё .doc / .docx — объединяются в один номер (до 8 материалов)</p>
-          <input type="file" id="articlesInput" accept=".doc,.docx" multiple hidden>
-        </div>
-        <div id="articlesList" class="file-list"></div>
-      </div>
-
-      <div class="upload-card">
-        <div id="imgDropzone" class="dropzone" data-type="img">
-          <div class="dz-icon">🖼</div>
-          <p><strong>Иллюстрации</strong> <span class="optional">(необязательно)</span></p>
-          <p class="hint">JPG, PNG + опционально mapping.json</p>
-          <p class="hint-small">Реклама: <code>reklama_50cm2.jpg</code> или <code>[РЕКЛАМА: ad.jpg 70x50mm]</code></p>
-          <p class="hint-small">Баннер на всю полосу: <code>[BANNER: promo.jpg]</code></p>
-          <input type="file" id="imgInput" accept="image/*,.json" multiple hidden>
-        </div>
-        <div id="imgList" class="file-list"></div>
-      </div>
-
-      <div class="upload-card">
-        <div id="refDropzone" class="dropzone" data-type="ref">
-          <div class="dz-icon">📑</div>
-          <p><strong>Примеры вёрстки (PDF)</strong> <span class="optional">(необязательно)</span></p>
-          <p class="hint">До 3 PDF — готовые страницы вашей типографии</p>
-          <p class="hint-small">PDF-референс: извлекает колонки, поля, рекламные слоты и формат полосы</p>
-          <input type="file" id="refInput" accept=".pdf" multiple hidden>
-        </div>
-        <div id="refList" class="file-list"></div>
-      </div>
-
-      <div class="upload-card">
-        <div id="fontDropzone" class="dropzone" data-type="font">
-          <div class="dz-icon">🔤</div>
-          <p><strong>Свои шрифты</strong> <span class="optional">(необязательно)</span></p>
-          <p class="hint">TTF/OTF — или используйте папку <code>fonts/</code></p>
-          <input type="file" id="fontInput" accept=".ttf,.otf" multiple hidden>
-        </div>
-        <div id="fontList" class="file-list"></div>
-      </div>
-    </div>
-
-    <details id="profileDetails" class="settings-panel" open>
-      <summary>2. Настройки типографики</summary>
-
-      <div class="settings-tabs">
-        <button type="button" class="tab active" data-tab="margins">Поля и печать</button>
-        <button type="button" class="tab" data-tab="adgrid">Рекламная сетка</button>
-        <button type="button" class="tab" data-tab="fonts">Шрифты</button>
-        <button type="button" class="tab" data-tab="advanced">Дополнительно</button>
-      </div>
-
-      <div class="tab-content active" id="tab-margins">
-        <div class="profile-grid">
-          <label>Margin Top, мм <input type="number" id="margin_top_mm" value="14" step="0.5" min="3" max="60"></label>
-          <label>Margin Bottom, мм <input type="number" id="margin_bottom_mm" value="14" step="0.5" min="3" max="60"></label>
-          <label>Margin Inside, мм <input type="number" id="margin_inside_mm" value="18" step="0.5" min="3" max="60"></label>
-          <label>Margin Outside, мм <input type="number" id="margin_outside_mm" value="16" step="0.5" min="3" max="60"></label>
-          <label>Columns (Number) <input type="number" id="columns_count" value="3" step="1" min="1" max="12"></label>
-          <label>Gutter, мм <input type="number" id="column_gutter_mm" value="3.5" step="0.1" min="0" max="30"></label>
-          <label>Вылет (bleed), мм <input type="number" id="bleed_mm" value="3" step="0.5" min="0" max="15"></label>
-          <label>Цветовой профиль
-            <select id="color_profile">
-              <option>Coated FOGRA39</option>
-              <option>Uncoated FOGRA29</option>
-              <option>US Web Coated SWOP v2</option>
-              <option>Japan Color 2001 Coated</option>
-              <option>sRGB IEC61966-2.1 (для digital)</option>
-            </select>
-          </label>
-          <label>Формат полосы
-            <select id="page_format">
-              <option value="okolica" selected>Околица (221.6×288.6 мм)</option>
-              <option value="a4">A4 (210×297 мм)</option>
-              <option value="tabloid">Таблоид (280×430 мм)</option>
-              <option value="newspaper_broadsheet">Газета (315×470 мм)</option>
-              <option value="custom">Свой формат…</option>
-            </select>
-          </label>
-          <div id="customSizeRow" class="custom-size-row" hidden>
-            <label>Ширина, мм <input type="number" id="custom_page_width_mm" value="221.58" step="0.01" min="100" max="600"></label>
-            <label>Высота, мм <input type="number" id="custom_page_height_mm" value="288.58" step="0.01" min="100" max="900"></label>
-          </div>
-          <label class="checkbox"><input type="checkbox" id="facing_pages"> Разворотные страницы (газетный блок)</label>
-          <label class="checkbox"><input type="checkbox" id="heading_starts_new_page" checked> Заголовок H1 с новой полосы</label>
-          <label class="checkbox"><input type="checkbox" id="print_marks"> Печатные метки (обрез, приводка, шкалы)</label>
-        </div>
-      </div>
-
-      <div class="tab-content" id="tab-adgrid">
-        <p class="tab-hint">Нарисуйте слоты мышью. Перетащите файл картинки на слот или выберите в списке. Зелёный = файл назначен.</p>
-        <div id="adGridImageChips" class="img-chips-row"></div>
-        <div class="grid-template-bar">
-          <button type="button" id="gridSaveTemplate" class="btn-preset">💾 Сохранить шаблон</button>
-          <select id="gridServerTemplateSelect"><option value="">— серверный шаблон —</option></select>
-          <button type="button" id="gridLoadServerTemplate" class="btn-preset">Загрузить с сервера</button>
-          <select id="gridTemplateSelect"><option value="">— локальный шаблон —</option></select>
-          <button type="button" id="gridLoadTemplate" class="btn-preset">Локально</button>
-        </div>
-        <div id="adGridPageTabs" class="grid-page-tabs"></div>
-        <div class="grid-editor-wrap">
-          <canvas id="adGridCanvas" class="ad-grid-canvas"></canvas>
-          <div class="grid-editor-side">
-            <p class="grid-side-title">Пресеты</p>
-            <div class="preset-btns">
-              <button type="button" class="btn-preset" data-grid-preset="right_column">Правая колонка</button>
-              <button type="button" class="btn-preset" data-grid-preset="top_banner">Верхний баннер</button>
-              <button type="button" class="btn-preset" data-grid-preset="three_bottom">3 внизу</button>
-              <button type="button" class="btn-preset" data-grid-preset="grid_2x2">Сетка 2×2</button>
-              <button type="button" class="btn-preset" data-grid-preset="newspaper_mix">Газетный микс</button>
-              <button type="button" class="btn-preset" data-grid-preset="issue_spread">Выпуск 2 полосы</button>
-            </div>
-            <p class="grid-side-title">Слоты <button type="button" id="adGridClear" class="btn-link">очистить</button></p>
-            <ul id="adGridSlotList" class="ad-slot-list"></ul>
-          </div>
-        </div>
-      </div>
-
-      <div class="tab-content" id="tab-fonts">
-        <p class="tab-hint">По умолчанию: Helios Cond (текст), SchoolBook (заголовки), Adventure (рубрики) — шрифты «Околицы». Можно сменить.</p>
-        <div class="profile-grid">
-          <label>Антиква (serif)
-            <select id="font_serif"><option value="">— авто —</option></select>
-          </label>
-          <label>Гротеск (sans)
-            <select id="font_sans"><option value="">— авто —</option></select>
-          </label>
-          <label>Акцентный (display)
-            <select id="font_display"><option value="">— авто —</option></select>
-          </label>
-          <label>Базовый кегль, pt <span class="optional">0 = авто</span>
-            <input type="number" id="body_size_override_pt" value="0" step="0.5" min="0" max="18">
-          </label>
-        </div>
-      </div>
-
-      <div class="tab-content" id="tab-advanced">
-        <div class="profile-grid">
-          <label>Язык текста
-            <select id="language">
-              <option value="ru-RU">Русский</option>
-              <option value="en-US">English (US)</option>
-              <option value="de-DE">Deutsch</option>
-              <option value="fr-FR">Français</option>
-            </select>
-          </label>
-          <label class="checkbox"><input type="checkbox" id="hyphenation" checked> Автоматические переносы</label>
-          <label class="checkbox"><input type="checkbox" id="auto_stock_images" checked> Подбирать стоковые фото, если мало иллюстраций</label>
-          <label class="checkbox"><input type="checkbox" id="mark_advertising" checked> Пометка «Реклама» у рекламных модулей</label>
-          <label class="checkbox"><input type="checkbox" id="use_reference_style" checked> Подстраивать поля и кегль под PDF-референсы</label>
-          <label class="checkbox"><input type="checkbox" id="jump_lines" checked> Продолжение на след. полосе (jump lines)</label>
-          <label class="checkbox"><input type="checkbox" id="smart_crop" checked> Смарт-кадрирование фото (фокус / горизонт)</label>
-          <label class="checkbox"><input type="checkbox" id="pdf_vector_export" checked> Векторный PDF (редактируемый текст)</label>
-        </div>
-      </div>
-    </details>
-
-    <button id="submitBtn" class="primary-btn" disabled>
-      <span class="btn-label">Сгенерировать 5 вариантов вёрстки</span>
-    </button>
+  <section class="panel kit-howto">
+    <h2 class="section-title">Памятка: что прикладывать</h2>
+    <table class="kit-needs-table">
+      <thead>
+        <tr><th>Функция</th><th>Что нужно от вас</th></tr>
+      </thead>
+      <tbody id="kitNeedsTableBody"></tbody>
+    </table>
   </section>
-  </details>
-
-  <section id="status-section" class="panel status-panel" hidden>
-    <div class="status-inner">
-      <div class="spinner"></div>
-      <div>
-        <p id="statusText">Обработка...</p>
-        <div class="progress-track"><div id="progressFill" class="progress-fill"></div></div>
-        <p id="statusDetail" class="status-detail"></p>
-      </div>
-    </div>
-  </section>
-
-  <section id="outline-section" class="panel outline-panel" hidden>
-    <h2 class="section-title">Структура документа</h2>
-    <ul id="outlineList" class="outline-list"></ul>
-  </section>
-
-  <section id="reference-section" class="panel reference-panel" hidden>
-    <h2 class="section-title">Анализ PDF-референсов</h2>
-    <p id="referenceSummary" class="reference-summary"></p>
-    <p id="referencePreferred" class="reference-preferred"></p>
-  </section>
-
-  <section id="placements-section" class="panel placements-panel" hidden>
-    <h2 class="section-title">Привязка иллюстраций к тексту</h2>
-    <p class="tab-hint">Система автоматически сопоставила картинки с разделами. Скачайте <code>mapping.json</code>, отредактируйте при необходимости и загрузите вместе с картинками при следующем запуске.</p>
-    <ul id="placementsList" class="placements-list"></ul>
-    <div class="placements-actions">
-      <button type="button" id="downloadMappingBtn" class="btn btn-secondary" hidden>Скачать mapping.json</button>
-      <button type="button" id="rebuildBtn" class="btn btn-primary" hidden>Пересобрать с правками</button>
-    </div>
-  </section>
-
-  <section id="results-section" class="panel" hidden>
-    <div class="results-header">
-      <h2 class="section-title">3. Выберите вариант вёрстки</h2>
-      <p id="resultsMeta" class="results-meta"></p>
-      <div id="issueArticles" class="file-list" hidden></div>
-      <button type="button" id="compareBtn" class="btn btn-secondary" hidden>Сравнить варианты</button>
-    </div>
-    <div id="results-grid" class="results-grid"></div>
-  </section>
-
-  <section id="error-section" class="error-box" hidden>
-    <strong>Ошибка</strong>
-    <p id="errorText"></p>
-  </section>
-
-  <div id="previewModal" class="modal" hidden>
-    <div class="modal-backdrop"></div>
-    <div class="modal-content preview-modal">
-      <button type="button" class="modal-close" id="previewClose">×</button>
-      <div class="preview-modal-header">
-        <h3 id="previewModalTitle">Просмотр макета</h3>
-        <span id="previewPageLabel" class="preview-page-label">Стр. 1</span>
-      </div>
-      <div class="preview-modal-body">
-        <button type="button" class="carousel-btn prev" id="previewPrev">‹</button>
-        <img id="previewModalImg" alt="Превью страницы">
-        <button type="button" class="carousel-btn next" id="previewNext">›</button>
-      </div>
-      <div id="previewThumbs" class="preview-thumbs"></div>
-    </div>
-  </div>
-
-  <div id="spreadEditorModal" class="modal" hidden>
-    <div class="modal-backdrop"></div>
-    <div class="modal-content spread-editor-modal">
-      <button type="button" class="modal-close" id="spreadEditorClose">×</button>
-      <div class="spread-editor-header">
-        <h3 id="spreadEditorTitle">Редактор полосы</h3>
-        <label>Полоса <select id="spreadEditorPage"></select></label>
-      </div>
-      <p class="tab-hint">Перетащите фрейм или потяните синий угол для изменения размера. Сохранить → пересборка INX.</p>
-      <div class="spread-canvas-wrap">
-        <canvas id="spreadEditorCanvas" class="spread-editor-canvas"></canvas>
-      </div>
-      <div class="spread-editor-actions">
-        <button type="button" id="spreadEditorSave" class="btn btn-primary">Сохранить и пересобрать</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="compareModal" class="modal" hidden>
-    <div class="modal-backdrop"></div>
-    <div class="modal-content compare-modal">
-      <button type="button" class="modal-close" id="compareClose">×</button>
-      <h3>Сравнение вариантов</h3>
-      <div class="compare-pickers">
-        <label>Слева <select id="compareLeft"></select></label>
-        <label>Справа <select id="compareRight"></select></label>
-      </div>
-      <div class="compare-view">
-        <div class="compare-pane"><img id="compareImgLeft" alt=""></div>
-        <div class="compare-pane"><img id="compareImgRight" alt=""></div>
-      </div>
-    </div>
-  </div>
 </main>
 
-<footer class="footer">
-  <p>InDesign CS3 · Process CMYK · Околица Kit · автомакет — эксперимент</p>
-</footer>
-
-<script src="/static/grid-editor.js"></script>
-<script src="/static/spread-editor.js"></script>
 <script src="/static/script.js"></script>
 </body>
 </html>

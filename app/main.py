@@ -161,53 +161,66 @@ def health():
 
 @app.get("/api/kit/catalog")
 def kit_catalog():
-    """Каталог элементов, сцен, рекламных форматов CS3 Kit."""
+    """Каталог модулей и паков для дизайнера CS3."""
     from app.kit.brand import catalog_as_dicts, BRAND_SWATCHES, COLOR_PROFILE_DEFAULT
-    from app.kit.scenes import list_scenes
+    from app.kit.packs import list_packs
     from app.kit.ads import list_ad_formats
     return {
         "elements": catalog_as_dicts(),
-        "scenes": list_scenes(),
+        "packs": list_packs(),
         "ad_formats": list_ad_formats(),
         "swatches_cmyk": {k: {"c": v[0], "m": v[1], "y": v[2], "k": v[3]} for k, v in BRAND_SWATCHES.items()},
         "color_profile": COLOR_PROFILE_DEFAULT,
         "indesign": "CS3 DOMVersion 5.0",
         "page_mm": {"width": 221.58, "height": 288.58, "bleed": 3.0},
-        "modes": ["issue", "scene", "catalog", "ad"],
+        "product": "designer_modules",
     }
 
 
 class KitGenerateBody(BaseModel):
     brief: str = ""
-    use_ai: bool = True
+    use_ai: bool = False
     include: list[str] | None = None
     scene_id: str | None = None
-    mode: str = "auto"  # auto|issue|scene|catalog|ad
+    mode: str = "catalog"  # catalog|ad (issue устарел)
     texts: dict[str, str] | None = None
     texts_by_scene: dict[str, dict[str, str]] | None = None
     scene_ids: list[str] | None = None
     ad_format_id: str | None = None
     source_text: str = ""
+    pack_id: str | None = None
 
 
 @app.post("/api/kit/generate")
 def generate_kit(background_tasks: BackgroundTasks, body: KitGenerateBody = Body(default=KitGenerateBody())):
-    """Генерация сцены / issue pack / рекламного формата для InDesign CS3."""
+    """Сборка модулей / баннеров для InDesign CS3 (помощник дизайнеру)."""
     job_id = uuid.uuid4().hex[:12]
     _job_dir(job_id)
     from app.tasks.worker import _write_status
-    _write_status(job_id, "queued", kind="kit")
+    from app.kit.packs import get_pack
+
+    pack = get_pack(body.pack_id) if body.pack_id else None
+    include = body.include
+    ad_format_id = body.ad_format_id
+    mode = body.mode or "catalog"
+    if pack and not include:
+        include = list(pack.elements)
+        if pack.ad_format_id and not ad_format_id:
+            ad_format_id = pack.ad_format_id
+            mode = "ad"
+
+    _write_status(job_id, "queued", kind="kit", pack_id=body.pack_id)
     background_tasks.add_task(
         process_kit_job,
         job_id,
         body.brief or "",
         body.use_ai,
-        body.include,
+        include,
         body.scene_id,
-        body.mode or "auto",
+        mode,
         body.texts,
         body.scene_ids,
-        body.ad_format_id,
+        ad_format_id,
         body.source_text or "",
         body.texts_by_scene,
     )
@@ -215,8 +228,8 @@ def generate_kit(background_tasks: BackgroundTasks, body: KitGenerateBody = Body
         "job_id": job_id,
         "kind": "kit",
         "status": "queued",
-        "mode": body.mode,
-        "scene_id": body.scene_id,
+        "mode": mode,
+        "pack_id": body.pack_id,
     }
 
 

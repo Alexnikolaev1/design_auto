@@ -21,8 +21,8 @@ from app.kit.scenes import SCENES, get_scene
 
 
 def test_app_version_super_genius():
-    assert APP_VERSION.startswith("3.")
-    assert APP_VERSION >= "3.3.0"
+    assert APP_VERSION.startswith("4.") or APP_VERSION.startswith("3.")
+    assert APP_VERSION >= "4.0.0"
 
 
 def test_geometry_matches_analysis_002():

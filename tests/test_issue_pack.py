@@ -12,7 +12,7 @@ from app.kit.issue_pack import (
 
 
 def test_version_3_3():
-    assert APP_VERSION >= "3.3.0"
+    assert APP_VERSION >= "4.0.0"
 
 
 def test_split_articles():
