@@ -1,10 +1,12 @@
 """
-Super Genius генератор INX для Adobe InDesign CS3 (DOMVersion 5.0).
+Генератор INX для Adobe InDesign CS3 (DOMVersion 5.0).
 
-- Process CMYK only
-- Named Layers + Groups (один Copy/Paste на модуль/сцену)
-- Object styles + OverprintFill на чистом Black
-- Linked 2-col article body
+CS3-safe профиль (иначе File → Open: «may not support the file format»):
+- AID PI: style="33" + DOMVersion="5.0" (как у реального CS3/CS4 Interchange)
+- Без RootLayerGroup / ItemLayer (дефолтный слой CS3)
+- Без Object Styles / AppliedObjectStyle
+- Линии: тонкие Rectangle (H/V); диагонали — GraphicLine только с GeometricBounds
+- Process CMYK, Named Groups для Copy/Paste, Overprint на K=100
 - Геометрия из examples/_analysis
 """
 from __future__ import annotations
@@ -87,27 +89,6 @@ def build_kit_inx(
     doc.set("DOMVersion", "5.0")
     doc.set("Self", f"d{_uid()}")
 
-    # --- Layers ---
-    layers_el = etree.SubElement(doc, "RootLayerGroup")
-    layer_map: dict[str, str] = {}
-    for i, (lid, lname) in enumerate((
-        ("kit_guides", "0 · Guides / Labels"),
-        ("kit_decor", "1 · Decor"),
-        ("kit_ads", "2 · Ads"),
-        ("kit_news", "3 · Short News"),
-        ("kit_article", "4 · Article"),
-        ("kit_masthead", "5 · Masthead"),
-    )):
-        layer = etree.SubElement(layers_el, "Layer")
-        sid = f"Layer/{lid}"
-        layer.set("Self", sid)
-        layer.set("Name", lname)
-        layer.set("Visible", "true")
-        layer.set("Locked", "false")
-        layer.set("IgnoreWrap", "false")
-        layer.set("LayerColor", str(i + 1))
-        layer_map[lid] = sid
-
     # --- CMYK swatches ---
     colors_el = etree.SubElement(doc, "RootColorGroup")
     color_ids: dict[str, str] = {}
@@ -161,10 +142,9 @@ def build_kit_inx(
             r = font_manager.resolve_variant(ps_name)
             font_family_map[ps_name] = (r.family, r.style)
 
-    # --- Paragraph / Character / Object styles ---
+    # --- Paragraph / Character styles (без Object Styles — CS3 часто рвёт INX) ---
     pstyles = etree.SubElement(doc, "RootParagraphStyleGroup")
     cstyles = etree.SubElement(doc, "RootCharacterStyleGroup")
-    ostyles = etree.SubElement(doc, "RootObjectStyleGroup")
 
     style_defs = [
         ("Заголовок 1", FONT_HEADLINE, H1_SIZE_PT, red, H1_SIZE_PT * 1.12),
@@ -209,29 +189,6 @@ def build_kit_inx(
             c_el.set("PointSize", str(round(size, 2)))
             if fill == black:
                 c_el.set("OverprintFill", "true")
-
-        # Object styles
-        for os_name, stroke, stroke_w, fill_c, extra in (
-            ("Kit Photo Frame", black, geo.PHOTO_STROKE, paper, {}),
-            ("Kit News Card", orange, geo.NEWS_STROKE, orange_tint, {}),
-            ("Kit Ad Module", black, 0.75, paper, {}),
-            ("Kit Logo Plate", None, 0, purple, {}),
-            ("Kit Weather Badge", None, 0, teal, {}),
-            ("Kit Wave Box", purple, geo.WAVE_BORDER_STROKE, paper, {}),
-        ):
-            o_el = etree.SubElement(ostyles, "ObjectStyle")
-            o_el.set("Self", f"ObjectStyle/{os_name}")
-            o_el.set("Name", os_name)
-            o_el.set("EnableFill", "true")
-            o_el.set("EnableStroke", "true")
-            o_el.set("FillColor", fill_c)
-            if stroke:
-                o_el.set("StrokeColor", stroke)
-                o_el.set("StrokeWeight", str(stroke_w))
-                if stroke == black:
-                    o_el.set("OverprintStroke", "true")
-            else:
-                o_el.set("StrokeWeight", "0")
 
     # --- Document prefs ---
     master = etree.SubElement(doc, "MasterSpread")
@@ -286,8 +243,6 @@ def build_kit_inx(
         scene_name=(
             scene.name if scene else (ad_fmt.name if ad_fmt else "")
         ),
-        layer_map=layer_map,
-        active_layer=layer_map["kit_guides"],
         group_stack=[],
         ad_format=ad_fmt,
     )
@@ -298,19 +253,34 @@ def build_kit_inx(
     elif scene is not None:
         with _group(ctx, f"SCENE · {scene.name}", "kit_scene"):
             _layout_scene(ctx, scene.id)
-    elif _is_backdrop_pack(include_set):
-        with _group(ctx, "Подложка", "kit_backdrop_page"):
-            _layout_backdrop_page(ctx)
-    elif _is_ornament_pack(include_set):
-        with _group(ctx, "Полоса узоров", "kit_ornament_page"):
-            _layout_ornament_page(ctx)
     else:
-        _layout_catalog(ctx)
+        kind = _pack_gallery_kind(include_set)
+        if kind == "ornament":
+            _layout_ornament_page(ctx)
+        elif kind == "backdrop":
+            _layout_backdrop_page(ctx)
+        elif kind == "masthead":
+            _layout_masthead_gallery(ctx)
+        elif kind == "photo":
+            _layout_photo_gallery(ctx)
+        elif kind == "weather":
+            _layout_weather_gallery(ctx)
+        elif kind == "shorts":
+            _layout_shorts_gallery(ctx)
+        elif kind == "teasers":
+            _layout_teasers_gallery(ctx)
+        elif kind == "styles":
+            _layout_styles_page(ctx)
+        else:
+            _layout_catalog(ctx)
 
     body_bytes = etree.tostring(doc, pretty_print=True, encoding="UTF-8")
     xml_declaration = b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-    aid_pi = (b'<?aid style="50" type="document" readerVersion="5.0" '
-              b'featureSet="257" product="5.0(370)" ?>\n')
+    # Реальный Adobe INX: style="33" + DOMVersion в PI (style="50" CS3 отвергает)
+    aid_pi = (
+        b'<?aid style="33" type="document" DOMVersion="5.0" '
+        b'readerVersion="5.0" featureSet="257" product="5.0(370)" ?>\n'
+    )
     return xml_declaration + aid_pi + body_bytes
 
 
@@ -336,7 +306,6 @@ class _group:
         grp = etree.SubElement(self._parent, "Group")
         grp.set("Self", f"Group/{self.self_tag}")
         grp.set("Name", self.name)
-        grp.set("ItemLayer", self.ctx.active_layer)
         self.ctx.group_stack.append(grp)
         return grp
 
@@ -349,7 +318,8 @@ def _parent(ctx: _Ctx) -> etree.Element:
 
 
 def _set_layer(ctx: _Ctx, key: str) -> None:
-    ctx.active_layer = ctx.layer_map.get(key, ctx.layer_map["kit_guides"])
+    """No-op: CS3-safe INX не использует кастомные Layers."""
+    return
 
 
 def _text_frame(
@@ -395,7 +365,6 @@ def _text_frame(
     if name:
         tf.set("Name", name)
     tf.set("ParentStory", story_id)
-    tf.set("ItemLayer", ctx.active_layer)
     tf.set("GeometricBounds", _bounds(y, x, y + h, x + w))
     tf.set("PreviousTextFrame", prev_tf or "n")
     tf.set("NextTextFrame", next_tf or "n")
@@ -414,10 +383,7 @@ def _rect(
     el.set("Self", rid)
     if name:
         el.set("Name", name)
-    el.set("ItemLayer", ctx.active_layer)
     el.set("GeometricBounds", _bounds(y, x, y + h, x + w))
-    if object_style:
-        el.set("AppliedObjectStyle", f"ObjectStyle/{object_style}")
     el.set("StrokeWeight", str(stroke_w if stroke else 0))
     if stroke:
         el.set("StrokeColor", stroke)
@@ -435,41 +401,55 @@ def _line(
     stroke: str | None = None, weight: float = 0.75,
     self_id: str = "", name: str = "",
 ) -> None:
+    """CS3-safe line: H/V → Rectangle; диагональ → GraphicLine только с GeometricBounds."""
     stroke = stroke or ctx.black
+    eps = 0.05
+    rid = self_id.replace("GraphicLine/", "Rectangle/") if self_id else ""
+
+    if abs(y0 - y1) < eps:
+        h = max(weight, 0.35)
+        _rect(
+            ctx, min(x0, x1), y0 - h / 2, max(abs(x1 - x0), 0.35), h,
+            fill=stroke, stroke=None, stroke_w=0, self_id=rid, name=name,
+        )
+        return
+    if abs(x0 - x1) < eps:
+        w = max(weight, 0.35)
+        _rect(
+            ctx, x0 - w / 2, min(y0, y1), w, max(abs(y1 - y0), 0.35),
+            fill=stroke, stroke=None, stroke_w=0, self_id=rid, name=name,
+        )
+        return
+
+    # Диагональ: без PathPointType/PathGeometry — только bounds (угол→угол)
     el = etree.SubElement(_parent(ctx), "GraphicLine")
     el.set("Self", self_id or f"GraphicLine/u{_uid()}")
     if name:
         el.set("Name", name)
-    el.set("ItemLayer", ctx.active_layer)
     el.set("GeometricBounds", _bounds(min(y0, y1), min(x0, x1), max(y0, y1), max(x0, x1)))
     el.set("StrokeWeight", str(weight))
     el.set("StrokeColor", stroke)
     if stroke == ctx.black:
         el.set("OverprintStroke", "true")
-    path = etree.SubElement(el, "PathPointType")
-    path.set("Anchor", f"{x0:.3f} {y0:.3f}")
-    path2 = etree.SubElement(el, "PathPointType")
-    path2.set("Anchor", f"{x1:.3f} {y1:.3f}")
 
 
 def _label(ctx: _Ctx, x: float, y: float, w: float, text: str) -> None:
     if ctx.scene_mode:
         return
-    prev = ctx.active_layer
-    _set_layer(ctx, "kit_guides")
     _text_frame(ctx, x, y, w, _mm(5), text, "Метка каталога", ctx.gray, name=f"label_{_uid()}")
-    ctx.active_layer = prev
 
 
-def _logo_vector(ctx: _Ctx, x: float, y: float, w: float, h: float) -> None:
+def _logo_vector(ctx: _Ctx, x: float, y: float, w: float, h: float, *, tag: str = "") -> None:
+    suffix = f"_{tag}" if tag else ""
+    sid = f"Rectangle/kit_masthead_logo{suffix}"
     _rect(ctx, x, y, w, h, fill=ctx.purple, stroke=None, stroke_w=0,
-          self_id="Rectangle/kit_masthead_logo", name="kit_masthead_logo",
-          object_style="Kit Logo Plate")
+          self_id=sid, name=f"kit_masthead_logo{suffix}")
     inset = _mm(1.2)
     _line(ctx, x + inset, y + _mm(1.5), x + w - inset, y + _mm(1.5),
-          ctx.paper, 0.4, self_id="GraphicLine/kit_logo_rule_top", name="kit_logo_rule_top")
+          ctx.paper, 0.4, self_id=f"GraphicLine/kit_logo_rule_top{suffix}",
+          name=f"kit_logo_rule_top{suffix}")
     _line(ctx, x + inset, y + h - _mm(1.5), x + w - inset, y + h - _mm(1.5),
-          ctx.paper, 0.4, name="kit_logo_rule_bot")
+          ctx.paper, 0.4, name=f"kit_logo_rule_bot{suffix}")
     cx, cy = x + _mm(4), y + h / 2
     arm = _mm(1.8)
     for a, b in (
@@ -480,11 +460,11 @@ def _logo_vector(ctx: _Ctx, x: float, y: float, w: float, h: float) -> None:
     ):
         _line(ctx, a[0], a[1], b[0], b[1], ctx.paper, 0.7)
     logo_text = ctx.texts.get("masthead_logo", "Сибирская околица")
-    # Real masthead uses Times Bold Italic for «Сибирская»
     _text_frame(
         ctx, x + _mm(8), y + _mm(1.5), w - _mm(10), h - _mm(2.5),
         logo_text, "Логотип", ctx.paper, fill_override=ctx.paper,
-        self_story_tag="kit_masthead_logo_text", name="kit_masthead_logo_text",
+        self_story_tag=f"kit_masthead_logo_text{suffix}",
+        name=f"kit_masthead_logo_text{suffix}",
         overprint=False,
     )
 
@@ -498,10 +478,8 @@ def _corners(ctx: _Ctx, x: float, y: float, box_w: float, box_h: float) -> None:
         (x + box_w - arm, y + box_h, x + box_w, y + box_h),
         (x + box_w, y + box_h, x + box_w, y + box_h - arm),
     ]
-    for i, (x0, y0, x1, y1) in enumerate(pts):
-        sid = "GraphicLine/kit_decor_corners" if i == 0 else ""
-        _line(ctx, x0, y0, x1, y1, ctx.purple, 1.0, self_id=sid,
-              name="kit_decor_corners" if i == 0 else "")
+    for x0, y0, x1, y1 in pts:
+        _line(ctx, x0, y0, x1, y1, ctx.purple, 1.0)
 
 
 def _polyline(ctx: _Ctx, pts: list[tuple[float, float]], stroke: str, weight: float = 0.6,
@@ -520,7 +498,7 @@ def _orn_label(ctx: _Ctx, x: float, y: float, text: str) -> None:
 
 def _wave_line(ctx: _Ctx, x: float, y: float, w: float, *,
                amp: float | None = None, periods: float = 5, stroke: str | None = None,
-               weight: float = 0.7, segs: int = 28) -> None:
+               weight: float = 0.7, segs: int = 12) -> None:
     stroke = stroke or ctx.purple
     amp = amp if amp is not None else _mm(2.4)
     pts = []
@@ -531,8 +509,9 @@ def _wave_line(ctx: _Ctx, x: float, y: float, w: float, *,
 
 
 def _double_wave(ctx: _Ctx, x: float, y: float, w: float) -> None:
-    _wave_line(ctx, x, y, w, amp=_mm(2.8), periods=6, weight=0.85)
-    _wave_line(ctx, x, y + _mm(2.2), w, amp=_mm(2.0), periods=6, weight=0.55, stroke=ctx.orange)
+    _wave_line(ctx, x, y, w, amp=_mm(2.8), periods=5, weight=0.85, segs=12)
+    _wave_line(ctx, x, y + _mm(2.2), w, amp=_mm(2.0), periods=5, weight=0.55,
+               stroke=ctx.orange, segs=12)
 
 
 def _scallop_edge(ctx: _Ctx, x: float, y: float, w: float, n: int = 8) -> None:
@@ -542,8 +521,8 @@ def _scallop_edge(ctx: _Ctx, x: float, y: float, w: float, n: int = 8) -> None:
         cx = x + step * (i + 0.5)
         r = step * 0.42
         pts = []
-        for k in range(9):
-            ang = math.pi + (math.pi * k / 8)
+        for k in range(5):
+            ang = math.pi + (math.pi * k / 4)
             pts.append((cx + r * math.cos(ang), y + r * math.sin(ang)))
         _polyline(ctx, pts, ctx.purple, 0.65)
 
@@ -574,95 +553,103 @@ def _diamond_chain(ctx: _Ctx, x: float, y: float, w: float, n: int = 9) -> None:
             _line(ctx, cx + s, y, cx + step - s, y, ctx.gray, 0.4)
 
 
-def _rosette(ctx: _Ctx, cx: float, cy: float, r: float, petals: int = 8) -> None:
+def _dot_row(ctx: _Ctx, x: float, y: float, w: float, n: int = 18,
+             size: float | None = None, fill: str | None = None) -> None:
+    """Ряд квадратных «бусин» — только Rectangle."""
+    size = size or _mm(1.3)
+    fill = fill or ctx.purple
+    step = w / max(n, 1)
+    for i in range(n):
+        _rect(ctx, x + step * i + (step - size) / 2, y - size / 2, size, size,
+              fill=fill, stroke=None, stroke_w=0)
+
+
+def _triple_rule(ctx: _Ctx, x: float, y: float, w: float) -> None:
+    _line(ctx, x, y, x + w, y, ctx.black, 1.1)
+    _line(ctx, x, y + _mm(1.4), x + w, y + _mm(1.4), ctx.black, 0.4)
+    _line(ctx, x, y + _mm(2.3), x + w, y + _mm(2.3), ctx.black, 0.4)
+
+
+def _ribbon_bar(ctx: _Ctx, x: float, y: float, w: float, h: float, fill: str) -> None:
+    """Плашка-лента с «засечками» по краям."""
+    _rect(ctx, x, y, w, h, fill=fill, stroke=None, stroke_w=0)
+    notch = h * 0.35
+    _rect(ctx, x, y, _mm(1.2), h, fill=ctx.paper, stroke=None, stroke_w=0)
+    _rect(ctx, x + w - _mm(1.2), y, _mm(1.2), h, fill=ctx.paper, stroke=None, stroke_w=0)
+    _line(ctx, x + _mm(2), y + notch, x + _mm(2), y + h - notch, ctx.paper, 0.6)
+    _line(ctx, x + w - _mm(2), y + notch, x + w - _mm(2), y + h - notch, ctx.paper, 0.6)
+
+
+def _nested_frame(ctx: _Ctx, x: float, y: float, w: float, h: float,
+                  outer: str, inner: str) -> None:
+    _rect(ctx, x, y, w, h, fill=ctx.paper, stroke=outer, stroke_w=1.5)
+    inset = _mm(2.5)
+    _rect(ctx, x + inset, y + inset, w - 2 * inset, h - 2 * inset,
+          fill=None, stroke=inner, stroke_w=0.55)
+    _corners(ctx, x + _mm(1.5), y + _mm(1.5), w - _mm(3), h - _mm(3))
+
+
+def _checker_band(ctx: _Ctx, x: float, y: float, w: float, h: float, n: int = 12) -> None:
+    step = w / n
+    for i in range(n):
+        if i % 2 == 0:
+            _rect(ctx, x + i * step, y, step, h, fill=ctx.purple, stroke=None, stroke_w=0)
+        else:
+            _rect(ctx, x + i * step, y, step, h, fill=ctx.orange_tint, stroke=None, stroke_w=0)
+
+
+def _rosette(ctx: _Ctx, cx: float, cy: float, r: float, petals: int = 6) -> None:
     for i in range(petals):
         ang = (2 * math.pi * i) / petals
-        x1 = cx + r * 0.25 * math.cos(ang)
-        y1 = cy + r * 0.25 * math.sin(ang)
-        x2 = cx + r * math.cos(ang)
-        y2 = cy + r * math.sin(ang)
-        _line(ctx, x1, y1, x2, y2, ctx.purple, 0.7)
-        # tip diamond
-        tx, ty = x2, y2
-        d = r * 0.12
-        perp = ang + math.pi / 2
-        _polyline(ctx, [
-            (tx, ty),
-            (tx + d * math.cos(perp), ty + d * math.sin(perp)),
-            (tx + d * 1.4 * math.cos(ang), ty + d * 1.4 * math.sin(ang)),
-            (tx - d * math.cos(perp), ty - d * math.sin(perp)),
-            (tx, ty),
-        ], ctx.orange, 0.5)
-    # center ring approx
-    for i in range(12):
-        a0 = 2 * math.pi * i / 12
-        a1 = 2 * math.pi * (i + 1) / 12
-        rr = r * 0.22
-        _line(ctx, cx + rr * math.cos(a0), cy + rr * math.sin(a0),
-              cx + rr * math.cos(a1), cy + rr * math.sin(a1), ctx.purple, 0.55)
+        _line(ctx, cx + r * 0.22 * math.cos(ang), cy + r * 0.22 * math.sin(ang),
+              cx + r * math.cos(ang), cy + r * math.sin(ang), ctx.purple, 0.7)
+    # центр — квадрат (без кольца из диагоналей)
+    s = r * 0.18
+    _rect(ctx, cx - s, cy - s, s * 2, s * 2, fill=None, stroke=ctx.orange, stroke_w=0.6)
 
 
 def _flourish_corner(ctx: _Ctx, x: float, y: float, size: float, *,
                      flip_x: int = 1, flip_y: int = 1) -> None:
-    """Угловой завиток (полилиния)."""
+    """Угловой завиток — короткая полилиния."""
     s = size
     fx, fy = flip_x, flip_y
     pts = [
         (x, y),
-        (x + fx * s * 0.15, y),
-        (x + fx * s * 0.35, y + fy * s * 0.08),
-        (x + fx * s * 0.55, y + fy * s * 0.05),
-        (x + fx * s * 0.7, y + fy * s * 0.25),
-        (x + fx * s * 0.55, y + fy * s * 0.45),
-        (x + fx * s * 0.35, y + fy * s * 0.4),
-        (x + fx * s * 0.25, y + fy * s * 0.55),
-        (x + fx * s * 0.45, y + fy * s * 0.75),
-        (x + fx * s * 0.2, y + fy * s * 0.9),
-        (x, y + fy * s * 0.7),
-        (x, y + fy * s * 0.35),
+        (x + fx * s * 0.2, y),
+        (x + fx * s * 0.45, y + fy * s * 0.12),
+        (x + fx * s * 0.65, y + fy * s * 0.08),
+        (x + fx * s * 0.75, y + fy * s * 0.35),
+        (x + fx * s * 0.4, y + fy * s * 0.55),
+        (x + fx * s * 0.15, y + fy * s * 0.4),
+        (x, y + fy * s * 0.55),
     ]
-    _polyline(ctx, pts, ctx.purple, 0.85)
-    # inner echo
-    pts2 = [
-        (x + fx * s * 0.08, y + fy * s * 0.12),
-        (x + fx * s * 0.28, y + fy * s * 0.18),
-        (x + fx * s * 0.4, y + fy * s * 0.35),
-        (x + fx * s * 0.22, y + fy * s * 0.5),
-        (x + fx * s * 0.08, y + fy * s * 0.35),
-    ]
-    _polyline(ctx, pts2, ctx.orange, 0.5)
+    _polyline(ctx, pts, ctx.purple, 0.8)
 
 
-def _vine_strip(ctx: _Ctx, x: float, y: float, h: float, leaves: int = 7) -> None:
+def _vine_strip(ctx: _Ctx, x: float, y: float, h: float, leaves: int = 5) -> None:
     _line(ctx, x, y, x, y + h, ctx.purple, 0.7)
     step = h / leaves
     for i in range(leaves):
         cy = y + step * (i + 0.5)
         side = 1 if i % 2 == 0 else -1
-        leaf = [
-            (x, cy),
-            (x + side * _mm(3), cy - _mm(1.2)),
-            (x + side * _mm(6), cy),
-            (x + side * _mm(3), cy + _mm(1.2)),
-            (x, cy),
-        ]
-        _polyline(ctx, leaf, ctx.teal if i % 3 == 0 else ctx.purple, 0.55)
+        # лист из H/V ромба
+        s = _mm(2.8)
+        _polyline(ctx, [
+            (x, cy), (x + side * s, cy - s * 0.45),
+            (x + side * s * 1.7, cy), (x + side * s, cy + s * 0.45), (x, cy),
+        ], ctx.teal if i % 3 == 0 else ctx.purple, 0.55)
 
 
-def _ornate_frame(ctx: _Ctx, x: float, y: float, w: float, h: float, caption: str) -> None:
-    # outer
+def _ornate_frame(ctx: _Ctx, x: float, y: float, w: float, h: float, caption: str,
+                  *, tag: str = "main") -> None:
     _rect(ctx, x, y, w, h, fill=ctx.paper, stroke=ctx.purple, stroke_w=1.4,
-          self_id="Rectangle/kit_decor_wave_border", name="kit_decor_wave_border",
-          object_style="Kit Wave Box")
-    # inner
+          self_id=f"Rectangle/kit_decor_wave_{tag}", name=f"kit_decor_wave_{tag}")
     inset = _mm(3)
     _rect(ctx, x + inset, y + inset, w - 2 * inset, h - 2 * inset,
           fill=None, stroke=ctx.orange, stroke_w=0.6)
-    # scallops on long edges
-    _scallop_edge(ctx, x + _mm(4), y + _mm(2.5), w - _mm(8), n=10)
-    _scallop_edge(ctx, x + _mm(4), y + h - _mm(2.5), w - _mm(8), n=10)
-    # corner flourishes
-    fs = _mm(10)
+    _scallop_edge(ctx, x + _mm(4), y + _mm(2.5), w - _mm(8), n=7)
+    _scallop_edge(ctx, x + _mm(4), y + h - _mm(2.5), w - _mm(8), n=7)
+    fs = _mm(9)
     _flourish_corner(ctx, x + _mm(2), y + _mm(2), fs, flip_x=1, flip_y=1)
     _flourish_corner(ctx, x + w - _mm(2), y + _mm(2), fs, flip_x=-1, flip_y=1)
     _flourish_corner(ctx, x + _mm(2), y + h - _mm(2), fs, flip_x=1, flip_y=-1)
@@ -670,7 +657,7 @@ def _ornate_frame(ctx: _Ctx, x: float, y: float, w: float, h: float, caption: st
     _text_frame(
         ctx, x + _mm(8), y + h / 2 - _mm(5), w - _mm(16), _mm(10),
         caption, "Рубрика", ctx.purple, fill_override=ctx.purple,
-        self_story_tag="kit_wave_caption", name="kit_wave_caption", overprint=False,
+        self_story_tag=f"kit_wave_caption_{tag}", name=f"kit_wave_caption_{tag}", overprint=False,
     )
 
 
@@ -678,7 +665,7 @@ def _wave_border(ctx: _Ctx, x: float, y: float, w: float, h: float, caption: str
     _ornate_frame(ctx, x, y, w, h, caption)
 
 
-def _star_burst(ctx: _Ctx, cx: float, cy: float, r: float, rays: int = 12) -> None:
+def _star_burst(ctx: _Ctx, cx: float, cy: float, r: float, rays: int = 8) -> None:
     for i in range(rays):
         ang = 2 * math.pi * i / rays
         r0 = r * (0.35 if i % 2 == 0 else 0.2)
@@ -702,152 +689,338 @@ def _is_backdrop_pack(include_set: set[str] | None) -> bool:
     return core == {"decor_wave_border", "decor_corners"}
 
 
+def _pack_gallery_kind(include_set: set[str] | None) -> str | None:
+    """Какая витрина-полоса для кнопки (не каталог)."""
+    if not include_set:
+        return None
+    if _is_ornament_pack(include_set):
+        return "ornament"
+    if _is_backdrop_pack(include_set):
+        return "backdrop"
+    core = include_set - {"styles_pack", "folio_line"}
+    mast = {"masthead_logo", "masthead_issue", "masthead_rubric_line"}
+    if core and core <= mast and "masthead_logo" in core:
+        return "masthead"
+    if core == {"article_photo_frame", "decor_corners"} or core == {"article_photo_frame"}:
+        return "photo"
+    if core == {"weather_badge"}:
+        return "weather"
+    if core == {"news_header", "news_card"}:
+        return "shorts"
+    if "cover_teaser" in core:
+        return "teasers"
+    if not core:
+        return "styles"
+    return None
+
+
 def _layout_ornament_page(ctx: _Ctx) -> None:
-    """Целая полоса разнообразных узоров для Copy/Paste по группам."""
+    """Целая полоса разнообразных узоров — каждый блок отдельный Group."""
     mx = _mm(geo.MARGIN_L)
     my = _mm(geo.MARGIN_T)
     content_w = ctx.page_w - mx - _mm(geo.MARGIN_R)
     caption = ctx.texts.get("wave_caption", "В эти дни")
 
-    _set_layer(ctx, "kit_guides")
     _text_frame(
-        ctx, mx, my - _mm(2), content_w, _mm(6),
-        "Полоса узоров Околицы · каждый блок — отдельный Group · Copy/Paste",
+        ctx, mx, my - _mm(1), content_w, _mm(5),
+        "Полоса узоров · Group → Copy/Paste · фирменные цвета Околицы",
         "Метка каталога", ctx.gray, name="kit_ornament_title",
     )
+    y = my + _mm(6)
 
-    _set_layer(ctx, "kit_decor")
-    y = my + _mm(8)
-
-    # 1. Волны
     with _group(ctx, "Узор · двойная волна", "orn_wave"):
         _orn_label(ctx, mx, y, "1. Двойная волна")
-        _double_wave(ctx, mx, y + _mm(6), content_w)
+        _double_wave(ctx, mx, y + _mm(5), content_w)
+        _dot_row(ctx, mx, y + _mm(11), content_w, n=22, fill=ctx.orange)
+    y += _mm(15)
+
+    with _group(ctx, "Узор · фестоны и бусины", "orn_scallop"):
+        _orn_label(ctx, mx, y, "2. Фестон / гирлянда")
+        _scallop_edge(ctx, mx, y + _mm(6), content_w, n=10)
+        _line(ctx, mx, y + _mm(10), mx + content_w, y + _mm(10), ctx.gray, 0.35)
+        _dot_row(ctx, mx, y + _mm(12.5), content_w, n=16, size=_mm(1.0), fill=ctx.purple)
     y += _mm(16)
 
-    # 2. Фестоны
-    with _group(ctx, "Узор · фестоны", "orn_scallop"):
-        _orn_label(ctx, mx, y, "2. Фестон / гирлянда")
-        _scallop_edge(ctx, mx, y + _mm(8), content_w, n=12)
-        _line(ctx, mx, y + _mm(12), mx + content_w, y + _mm(12), ctx.gray, 0.35)
-    y += _mm(18)
-
-    # 3. Греческий ключ
     with _group(ctx, "Узор · меандр", "orn_greek"):
         _orn_label(ctx, mx, y, "3. Меандр (греческий ключ)")
-        _greek_key(ctx, mx, y + _mm(5), content_w)
-    y += _mm(16)
+        _greek_key(ctx, mx, y + _mm(4), content_w)
+    y += _mm(14)
 
-    # 4. Цепь ромбов
     with _group(ctx, "Узор · ромбы", "orn_diamonds"):
         _orn_label(ctx, mx, y, "4. Цепь ромбов")
-        _diamond_chain(ctx, mx, y + _mm(8), content_w, n=11)
-    y += _mm(16)
+        _diamond_chain(ctx, mx, y + _mm(7), content_w, n=9)
+    y += _mm(14)
 
-    # 5. Разделители
-    with _group(ctx, "Узор · разделители", "orn_rules"):
-        _orn_label(ctx, mx, y, "5. Разделители")
-        _line(ctx, mx, y + _mm(6), mx + content_w, y + _mm(6), ctx.black, 0.75,
-              self_id="GraphicLine/kit_decor_rule", name="kit_decor_rule")
-        _line(ctx, mx, y + _mm(9), mx + content_w, y + _mm(9), ctx.black, 0.4)
-        _line(ctx, mx, y + _mm(10.5), mx + content_w, y + _mm(10.5), ctx.black, 0.4,
-              self_id="GraphicLine/kit_decor_divider", name="kit_decor_divider")
-        # ornament mid
+    with _group(ctx, "Узор · тройная линейка", "orn_rules"):
+        _orn_label(ctx, mx, y, "5. Разделители / тройная линейка")
+        _triple_rule(ctx, mx, y + _mm(5), content_w)
         mid = mx + content_w / 2
-        _rosette(ctx, mid, y + _mm(16), _mm(5), petals=6)
-        _line(ctx, mx, y + _mm(16), mid - _mm(7), y + _mm(16), ctx.gray, 0.45)
-        _line(ctx, mid + _mm(7), y + _mm(16), mx + content_w, y + _mm(16), ctx.gray, 0.45)
+        _line(ctx, mx, y + _mm(12), mid - _mm(8), y + _mm(12), ctx.gray, 0.45,
+              self_id="GraphicLine/kit_decor_rule", name="kit_decor_rule")
+        _rosette(ctx, mid, y + _mm(12), _mm(5), petals=6)
+        _line(ctx, mid + _mm(8), y + _mm(12), mx + content_w, y + _mm(12), ctx.gray, 0.45,
+              self_id="GraphicLine/kit_decor_divider", name="kit_decor_divider")
+    y += _mm(18)
+
+    with _group(ctx, "Узор · розетки и звёзды", "orn_rosettes"):
+        _orn_label(ctx, mx, y, "6. Розетки и звёзды")
+        _rosette(ctx, mx + _mm(22), y + _mm(13), _mm(10), petals=6)
+        _star_burst(ctx, mx + _mm(55), y + _mm(13), _mm(9), rays=8)
+        _rosette(ctx, mx + _mm(90), y + _mm(13), _mm(8), petals=8)
+        _star_burst(ctx, mx + _mm(125), y + _mm(13), _mm(8), rays=8)
+        _rosette(ctx, mx + _mm(160), y + _mm(13), _mm(9), petals=6)
+    y += _mm(28)
+
+    with _group(ctx, "Узор · уголки и лоза", "orn_corners"):
+        _orn_label(ctx, mx, y, "7. Уголки, завитки и лоза")
+        _corners(ctx, mx, y + _mm(4), _mm(30), _mm(26))
+        _flourish_corner(ctx, mx + _mm(38), y + _mm(4), _mm(12), flip_x=1, flip_y=1)
+        _flourish_corner(ctx, mx + _mm(54), y + _mm(4), _mm(12), flip_x=-1, flip_y=1)
+        _flourish_corner(ctx, mx + _mm(38), y + _mm(18), _mm(12), flip_x=1, flip_y=-1)
+        _flourish_corner(ctx, mx + _mm(54), y + _mm(18), _mm(12), flip_x=-1, flip_y=-1)
+        _vine_strip(ctx, mx + _mm(85), y + _mm(3), _mm(28), leaves=5)
+        _vine_strip(ctx, mx + _mm(100), y + _mm(3), _mm(28), leaves=5)
+        _checker_band(ctx, mx + _mm(120), y + _mm(8), _mm(55), _mm(6), n=10)
+    y += _mm(34)
+
+    with _group(ctx, "Узор · лента-шашка", "orn_ribbon"):
+        _orn_label(ctx, mx, y, "8. Лента и шашечный бордюр")
+        _ribbon_bar(ctx, mx, y + _mm(5), content_w, _mm(7), ctx.purple)
+        _checker_band(ctx, mx, y + _mm(15), content_w, _mm(5), n=16)
     y += _mm(24)
 
-    # 6. Розетки и звёзды в ряд
-    with _group(ctx, "Узор · розетки", "orn_rosettes"):
-        _orn_label(ctx, mx, y, "6. Розетки и звёзды")
-        _rosette(ctx, mx + _mm(18), y + _mm(14), _mm(11), petals=8)
-        _rosette(ctx, mx + _mm(50), y + _mm(14), _mm(9), petals=6)
-        _star_burst(ctx, mx + _mm(82), y + _mm(14), _mm(10), rays=14)
-        _rosette(ctx, mx + _mm(115), y + _mm(14), _mm(8), petals=10)
-        _star_burst(ctx, mx + _mm(150), y + _mm(14), _mm(9), rays=10)
-    y += _mm(32)
-
-    # 7. Уголки + лоза
-    with _group(ctx, "Узор · уголки и лоза", "orn_corners"):
-        _orn_label(ctx, mx, y, "7. Уголки и вертикальная лоза")
-        _corners(ctx, mx, y + _mm(5), _mm(28), _mm(28))
-        _flourish_corner(ctx, mx + _mm(40), y + _mm(5), _mm(14), flip_x=1, flip_y=1)
-        _flourish_corner(ctx, mx + _mm(58), y + _mm(5), _mm(14), flip_x=-1, flip_y=1)
-        _flourish_corner(ctx, mx + _mm(40), y + _mm(22), _mm(14), flip_x=1, flip_y=-1)
-        _flourish_corner(ctx, mx + _mm(58), y + _mm(22), _mm(14), flip_x=-1, flip_y=-1)
-        _vine_strip(ctx, mx + _mm(90), y + _mm(4), _mm(32), leaves=8)
-        _vine_strip(ctx, mx + _mm(105), y + _mm(4), _mm(32), leaves=8)
-    y += _mm(40)
-
-    # 8. Большая рамка «В эти дни»
     with _group(ctx, "Узор · рамка врезки", "orn_frame"):
-        _orn_label(ctx, mx, y, "8. Рамка врезки / подложка")
-        fw = min(content_w, _mm(170))
-        fh = _mm(42)
-        _ornate_frame(ctx, mx, y + _mm(5), fw, fh, caption)
-    y += _mm(54)
+        _orn_label(ctx, mx, y, "9. Рамка врезки / подложка")
+        fw = min(content_w, _mm(175))
+        _ornate_frame(ctx, mx, y + _mm(4), fw, _mm(36), caption)
+    y += _mm(44)
 
-    # 9. Нижний бордюр-комбо
     with _group(ctx, "Узор · бордюр-комбо", "orn_combo"):
-        _orn_label(ctx, mx, y, "9. Бордюр-комбо (волна + ромбы + фестон)")
-        _wave_line(ctx, mx, y + _mm(6), content_w, periods=8, weight=0.8)
-        _diamond_chain(ctx, mx, y + _mm(14), content_w, n=13)
-        _scallop_edge(ctx, mx, y + _mm(22), content_w, n=14)
+        _orn_label(ctx, mx, y, "10. Бордюр-комбо (волна + ромбы + фестон)")
+        _wave_line(ctx, mx, y + _mm(5), content_w, periods=5, weight=0.8, segs=12)
+        _diamond_chain(ctx, mx, y + _mm(12), content_w, n=9)
+        _scallop_edge(ctx, mx, y + _mm(19), content_w, n=10)
+        _dot_row(ctx, mx, y + _mm(24), content_w, n=20, size=_mm(1.1), fill=ctx.teal)
 
     _folio(ctx)
 
 
 def _layout_backdrop_page(ctx: _Ctx) -> None:
-    """Крупная красивая подложка + варианты оттенков."""
+    """Полоса разнообразных подложек на всю страницу."""
     mx = _mm(geo.MARGIN_L)
     my = _mm(geo.MARGIN_T)
     content_w = ctx.page_w - mx - _mm(geo.MARGIN_R)
     caption = ctx.texts.get("wave_caption", "В эти дни")
 
-    _set_layer(ctx, "kit_guides")
     _text_frame(
-        ctx, mx, my, content_w, _mm(6),
-        "Подложки · выберите Group → Copy/Paste под врезку или цитату",
+        ctx, mx, my, content_w, _mm(5),
+        "Подложки · выберите Group → Copy/Paste под врезку, цитату или анонс",
         "Метка каталога", ctx.gray, name="kit_backdrop_title",
     )
-    _set_layer(ctx, "kit_decor")
+    y = my + _mm(8)
 
-    # Main ornate
-    with _group(ctx, "Подложка · основная", "backdrop_main"):
-        _ornate_frame(ctx, mx, my + _mm(12), content_w, _mm(55), caption)
+    with _group(ctx, "Подложка · орнамент", "backdrop_main"):
+        _ornate_frame(ctx, mx, y, content_w, _mm(42), caption)
+    y += _mm(48)
 
-    # Tint variants
-    y = my + _mm(78)
     with _group(ctx, "Подложка · оранжевая", "backdrop_orange"):
-        _rect(ctx, mx, y, _mm(85), _mm(40), fill=ctx.orange_tint, stroke=ctx.orange, stroke_w=1.0)
-        _scallop_edge(ctx, mx + _mm(3), y + _mm(3), _mm(79), n=7)
-        _text_frame(ctx, mx + _mm(6), y + _mm(14), _mm(73), _mm(12),
+        _rect(ctx, mx, y, _mm(90), _mm(38), fill=ctx.orange_tint, stroke=ctx.orange, stroke_w=1.1)
+        _scallop_edge(ctx, mx + _mm(4), y + _mm(3), _mm(82), n=8)
+        _dot_row(ctx, mx + _mm(6), y + _mm(8), _mm(78), n=12, fill=ctx.orange)
+        _text_frame(ctx, mx + _mm(6), y + _mm(14), _mm(78), _mm(14),
                     caption, "Рубрика", ctx.orange, fill_override=ctx.orange, overprint=False)
 
     with _group(ctx, "Подложка · бирюзовая", "backdrop_teal"):
-        _rect(ctx, mx + _mm(95), y, _mm(85), _mm(40), fill=ctx.paper, stroke=ctx.teal, stroke_w=1.25)
-        _double_wave(ctx, mx + _mm(100), y + _mm(8), _mm(75))
-        _text_frame(ctx, mx + _mm(100), y + _mm(16), _mm(75), _mm(14),
+        _rect(ctx, mx + _mm(98), y, content_w - _mm(98), _mm(38),
+              fill=ctx.paper, stroke=ctx.teal, stroke_w=1.25)
+        _double_wave(ctx, mx + _mm(104), y + _mm(6), content_w - _mm(110))
+        _text_frame(ctx, mx + _mm(104), y + _mm(14), content_w - _mm(112), _mm(14),
                     caption, "Рубрика", ctx.teal, fill_override=ctx.teal, overprint=False)
+    y += _mm(44)
 
-    y2 = y + _mm(50)
     with _group(ctx, "Подложка · уголки", "backdrop_corners"):
-        _rect(ctx, mx, y2, content_w, _mm(36), fill=ctx.paper, stroke=ctx.purple, stroke_w=0.5)
-        _corners(ctx, mx + _mm(4), y2 + _mm(4), content_w - _mm(8), _mm(28))
-        _flourish_corner(ctx, mx + _mm(8), y2 + _mm(8), _mm(12), flip_x=1, flip_y=1)
-        _flourish_corner(ctx, mx + content_w - _mm(8), y2 + _mm(8), _mm(12), flip_x=-1, flip_y=1)
-        _text_frame(ctx, mx + _mm(20), y2 + _mm(12), content_w - _mm(40), _mm(12),
+        _nested_frame(ctx, mx, y, content_w, _mm(34), ctx.purple, ctx.orange)
+        _text_frame(ctx, mx + _mm(16), y + _mm(10), content_w - _mm(32), _mm(12),
+                    caption, "Рубрика", ctx.purple, fill_override=ctx.purple, overprint=False)
+    y += _mm(40)
+
+    with _group(ctx, "Подложка · цитата", "backdrop_quote"):
+        _rect(ctx, mx, y, content_w, _mm(36), fill=ctx.paper, stroke=ctx.red, stroke_w=0.75)
+        _rect(ctx, mx, y, _mm(4), _mm(36), fill=ctx.red, stroke=None, stroke_w=0)
+        _triple_rule(ctx, mx + _mm(10), y + _mm(6), content_w - _mm(20))
+        _text_frame(ctx, mx + _mm(12), y + _mm(14), content_w - _mm(24), _mm(14),
+                    caption, "Лид", ctx.black, name="kit_backdrop_quote")
+    y += _mm(42)
+
+    with _group(ctx, "Подложка · лента", "backdrop_ribbon"):
+        _ribbon_bar(ctx, mx, y, content_w, _mm(14), ctx.purple)
+        _text_frame(ctx, mx + _mm(8), y + _mm(2), content_w - _mm(16), _mm(10),
+                    caption, "Короткие шапка", ctx.paper, fill_override=ctx.paper,
+                    overprint=False, name="kit_backdrop_ribbon_txt")
+    y += _mm(20)
+
+    with _group(ctx, "Подложка · виньетка", "backdrop_vignette"):
+        _rect(ctx, mx, y, content_w, _mm(40), fill=ctx.paper, stroke=ctx.purple, stroke_w=0.5)
+        _diamond_chain(ctx, mx + _mm(8), y + _mm(8), content_w - _mm(16), n=8)
+        _corners(ctx, mx + _mm(6), y + _mm(6), content_w - _mm(12), _mm(28))
+        _text_frame(ctx, mx + _mm(20), y + _mm(16), content_w - _mm(40), _mm(12),
                     caption, "Рубрика", ctx.purple, fill_override=ctx.purple, overprint=False)
 
+    _folio(ctx)
+
+
+def _layout_masthead_gallery(ctx: _Ctx) -> None:
+    mx = _mm(geo.MARGIN_L)
+    my = _mm(geo.MARGIN_T)
+    cw = ctx.page_w - mx - _mm(geo.MARGIN_R)
+    _text_frame(ctx, mx, my, cw, _mm(5),
+                "Шапка · несколько вариантов плашки — Copy/Paste нужный Group",
+                "Метка каталога", ctx.gray, name="kit_mh_gallery_title")
+    y = my + _mm(10)
+    with _group(ctx, "Шапка · полная", "mh_full"):
+        _draw_masthead(ctx, mx, y)
+    y += _mm(28)
+    with _group(ctx, "Шапка · широкий логотип", "mh_wide"):
+        _logo_vector(ctx, mx, y, min(cw, _mm(120)), _mm(geo.LOGO_H * 1.15), tag="wide")
+    y += _mm(28)
+    with _group(ctx, "Шапка · компакт", "mh_compact"):
+        _logo_vector(ctx, mx, y, _mm(70), _mm(14), tag="compact")
+        _text_frame(ctx, mx + _mm(74), y + _mm(2), _mm(50), _mm(8),
+                    ctx.texts.get("masthead_issue", "№ — / дата"), "Выпуск", ctx.gray)
+        _line(ctx, mx, y + _mm(16), mx + cw, y + _mm(16), ctx.purple, 0.7)
+    y += _mm(28)
+    with _group(ctx, "Шапка · только линейка рубрики", "mh_rubric"):
+        _ribbon_bar(ctx, mx, y, cw, _mm(8), ctx.purple)
+        _text_frame(ctx, mx + _mm(6), y + _mm(1), cw - _mm(12), _mm(6),
+                    ctx.texts.get("masthead_rubric_line", "Актуально"),
+                    "Короткие шапка", ctx.paper, fill_override=ctx.paper, overprint=False)
+    _folio(ctx)
+
+
+def _layout_photo_gallery(ctx: _Ctx) -> None:
+    mx = _mm(geo.MARGIN_L)
+    my = _mm(geo.MARGIN_T)
+    cw = ctx.page_w - mx - _mm(geo.MARGIN_R)
+    _text_frame(ctx, mx, my, cw, _mm(5),
+                "Рамки фото · Place CMYK ≥300 dpi · Copy/Paste Group",
+                "Метка каталога", ctx.gray, name="kit_photo_gallery_title")
+    y = my + _mm(10)
+    sizes = (
+        ("Фото · широкий кадр", cw, _mm(55)),
+        ("Фото · квадрат", _mm(70), _mm(70)),
+        ("Фото · узкий", _mm(55), _mm(75)),
+    )
+    for i, (label, pw, ph) in enumerate(sizes):
+        with _group(ctx, label, f"photo_var_{i}"):
+            _orn_label(ctx, mx, y, label)
+            photo = _rect(ctx, mx, y + _mm(5), pw, ph, fill=ctx.paper, stroke=ctx.black,
+                          stroke_w=geo.PHOTO_STROKE, name=f"kit_photo_frame_{i}")
+            tw = etree.SubElement(photo, "TextWrapPreference")
+            tw.set("TextWrapMode", "BoundingBoxTextWrap")
+            tw.set("TextWrapOffset", f"{_mm(2):.3f} {_mm(2):.3f} {_mm(2):.3f} {_mm(2):.3f}")
+            _corners(ctx, mx + _mm(2), y + _mm(7), pw - _mm(4), ph - _mm(4))
+            _text_frame(ctx, mx + _mm(4), y + _mm(5) + ph / 2 - _mm(3), pw - _mm(8), _mm(6),
+                        "[Place фото]", "Подпись", ctx.gray)
+        y += ph + _mm(14)
+        if y > ctx.page_h - _mm(40):
+            break
+    _folio(ctx)
+
+
+def _layout_weather_gallery(ctx: _Ctx) -> None:
+    mx = _mm(geo.MARGIN_L)
+    my = _mm(geo.MARGIN_T)
+    cw = ctx.page_w - mx - _mm(geo.MARGIN_R)
+    txt = ctx.texts.get("weather_badge", ctx.texts.get("wave_caption", "ПРОГНОЗ ПОГОДЫ"))
+    _text_frame(ctx, mx, my, cw, _mm(5),
+                "Плашки погоды · варианты ширины и цвета",
+                "Метка каталога", ctx.gray)
+    y = my + _mm(12)
+    for i, (label, w, fill, stroke) in enumerate((
+        ("Погода · бирюзовая", _mm(90), ctx.teal, ctx.teal),
+        ("Погода · фиолетовая", _mm(110), ctx.purple, ctx.purple),
+        ("Погода · на всю ширину", cw, ctx.teal, ctx.purple),
+    )):
+        with _group(ctx, label, f"weather_var_{i}"):
+            _rect(ctx, mx, y, w, _mm(16), fill=fill, stroke=None, stroke_w=0,
+                  name=f"kit_weather_{i}")
+            _text_frame(ctx, mx + _mm(4), y + _mm(3), w - _mm(8), _mm(10),
+                        txt, "Погода шапка", ctx.paper, fill_override=ctx.paper, overprint=False)
+            _line(ctx, mx, y + _mm(16), mx + w, y + _mm(16), stroke, 0.8)
+        y += _mm(28)
+    _folio(ctx)
+
+
+def _layout_shorts_gallery(ctx: _Ctx) -> None:
+    mx = _mm(geo.MARGIN_L)
+    my = _mm(geo.MARGIN_T)
+    _text_frame(ctx, mx, my, _mm(180), _mm(5),
+                "Короткие новости · шапка + карточки — текст впишете в CS3",
+                "Метка каталога", ctx.gray)
+    _draw_news_sidebar(ctx, mx, my + _mm(10))
+    # вторая колонка-вариант
+    x2 = mx + _mm(geo.SIDEBAR_W + 10)
+    with _group(ctx, "Карточки · широкий вариант", "shorts_wide"):
+        _rect(ctx, x2, my + _mm(10), _mm(100), _mm(12), fill=ctx.orange, stroke=None, stroke_w=0)
+        _text_frame(ctx, x2 + _mm(3), my + _mm(12), _mm(94), _mm(8),
+                    ctx.texts.get("news_header", "Коротко"), "Короткие шапка",
+                    ctx.paper, fill_override=ctx.paper, overprint=False)
+        for i in range(3):
+            cy = my + _mm(28) + i * _mm(28)
+            _rect(ctx, x2, cy, _mm(100), _mm(24), fill=ctx.orange_tint, stroke=ctx.orange, stroke_w=0.75)
+            _text_frame(ctx, x2 + _mm(3), cy + _mm(4), _mm(94), _mm(16),
+                        ctx.texts.get(f"news_card_{i+1}", f"Новость {i+1}"),
+                        "Основной текст", ctx.black)
+    _folio(ctx)
+
+
+def _layout_teasers_gallery(ctx: _Ctx) -> None:
+    mx = _mm(geo.MARGIN_L)
+    my = _mm(geo.MARGIN_T)
+    cw = ctx.page_w - mx - _mm(geo.MARGIN_R)
+    _text_frame(ctx, mx, my, cw, _mm(5),
+                "Тизеры обложки · с уголками и без",
+                "Метка каталога", ctx.gray)
+    y = _draw_masthead(ctx, mx, my + _mm(8))
+    y = _draw_cover_teasers(ctx, mx, y + _mm(6))
+    with _group(ctx, "Тизер · крупный анонс", "teaser_hero"):
+        _nested_frame(ctx, mx, y + _mm(8), cw, _mm(36), ctx.purple, ctx.orange)
+        _text_frame(ctx, mx + _mm(12), y + _mm(18), cw - _mm(24), _mm(14),
+                    ctx.texts.get("cover_teaser_1", "Тема номера · Стр. 1"),
+                    "Тизер обложки", ctx.purple, fill_override=ctx.purple, overprint=False)
+    _folio(ctx)
+
+
+def _layout_styles_page(ctx: _Ctx) -> None:
+    mx = _mm(geo.MARGIN_L)
+    my = _mm(geo.MARGIN_T)
+    cw = ctx.page_w - mx - _mm(geo.MARGIN_R)
+    samples = [
+        ("Заголовок 1", "Заголовок первого уровня", ctx.red),
+        ("Заголовок 2", "Заголовок второго уровня", ctx.red),
+        ("Рубрика", "РУБРИКА / КИКЕР", ctx.black),
+        ("Лид", "Лид материала — чуть крупнее основного.", ctx.black),
+        ("Основной текст", "Основной текст полосы. Переносы, выключка.", ctx.black),
+        ("Подпись", "Подпись к фото или врезке.", ctx.gray),
+        ("Реклама", "Пометка «Реклама»", ctx.gray),
+        ("Folio", "Сибирская околица · folio", ctx.gray),
+    ]
+    _text_frame(ctx, mx, my, cw, _mm(5),
+                "Пакет стилей · образец Paragraph Styles (Copy текста со стилем)",
+                "Метка каталога", ctx.gray)
+    y = my + _mm(10)
+    with _group(ctx, "Образцы стилей", "styles_samples"):
+        for style, sample, col in samples:
+            _text_frame(ctx, mx, y, cw, _mm(10), sample, style, col,
+                        fill_override=col if col != ctx.black else None,
+                        overprint=(col == ctx.black))
+            y += _mm(12)
     _folio(ctx)
 
 
 def _folio(ctx: _Ctx) -> None:
     if not ctx.want("folio_line"):
         return
-    _set_layer(ctx, "kit_decor")
     with _group(ctx, "Folio", "kit_folio"):
         y = ctx.page_h - _mm(geo.MARGIN_B) + _mm(2)
         _line(ctx, _mm(geo.MARGIN_L), y - _mm(3),
@@ -1096,37 +1269,33 @@ def _draw_weather(ctx: _Ctx, x: float, y: float) -> float:
 
 
 def _layout_ad_format(ctx: _Ctx, fmt) -> None:
-    """Отдельная полоса-каталог одного рекламного формата."""
+    """Полоса рекламного формата: основной слот + декоративные рамки."""
     from app.kit.ads import AdFormat
     fmt: AdFormat
     mx = _mm(geo.MARGIN_L)
     my = _mm(geo.MARGIN_T)
-    _set_layer(ctx, "kit_guides")
+    cw = ctx.page_w - mx - _mm(geo.MARGIN_R)
     _text_frame(
-        ctx, mx, my, _mm(180), _mm(8),
+        ctx, mx, my, cw, _mm(7),
         f"Реклама: {fmt.name} · {fmt.width_mm:.0f}×{fmt.height_mm:.0f} мм · "
         f"{fmt.area_cm2} см² · ориентир {fmt.price_hint_rub} ₽",
         "Метка каталога", ctx.gray, name="kit_ad_format_label",
     )
-    _set_layer(ctx, "kit_ads")
     aw, ah = _mm(fmt.width_mm), _mm(fmt.height_mm)
-    ax = mx
-    ay = my + _mm(14)
-    # не выходим за поля
+    ax, ay = mx, my + _mm(12)
     max_w = ctx.page_w - mx - _mm(geo.MARGIN_R)
-    max_h = ctx.page_h - ay - _mm(geo.MARGIN_B) - _mm(10)
+    max_h = ctx.page_h - ay - _mm(geo.MARGIN_B) - _mm(80)
     aw = min(aw, max_w)
     ah = min(ah, max_h)
     with _group(ctx, f"Ad {fmt.id}", f"kit_adfmt_{fmt.id}"):
         _rect(ctx, ax, ay, aw, ah, fill=ctx.paper, stroke=ctx.black, stroke_w=0.75,
-              self_id=f"Rectangle/kit_ad_format_{fmt.id}", name=f"kit_ad_format_{fmt.id}",
-              object_style="Kit Ad Module")
+              self_id=f"Rectangle/kit_ad_format_{fmt.id}", name=f"kit_ad_format_{fmt.id}")
         _text_frame(
             ctx, ax + _mm(2), ay + _mm(2), aw - _mm(4), _mm(5),
             "Реклама", "Реклама", ctx.gray, name="kit_ad_format_mark",
         )
         _text_frame(
-            ctx, ax + _mm(2), ay + _mm(10), aw - _mm(4), ah - _mm(14),
+            ctx, ax + _mm(2), ay + _mm(10), aw - _mm(4), max(ah - _mm(20), _mm(8)),
             ctx.texts.get("ad_body_wide") or ctx.texts.get("ad_body_narrow")
             or f"{fmt.name}\n{fmt.description}",
             "Основной текст", ctx.black, name="kit_ad_format_body",
@@ -1136,6 +1305,20 @@ def _layout_ad_format(ctx: _Ctx, fmt) -> None:
                 ctx, ax + _mm(2), ay + ah - _mm(8), aw - _mm(4), _mm(6),
                 ctx.texts["ad_price"], "Реклама", ctx.gray, name="kit_ad_format_price",
             )
+    y2 = ay + ah + _mm(10)
+    with _group(ctx, "Рамка · с уголками", "ad_frame_corners"):
+        bw = min(cw * 0.55, _mm(110))
+        bh = _mm(34)
+        _rect(ctx, mx, y2, bw, bh, fill=ctx.paper, stroke=ctx.purple, stroke_w=0.75)
+        _corners(ctx, mx + _mm(3), y2 + _mm(3), bw - _mm(6), bh - _mm(6))
+        _text_frame(ctx, mx + _mm(8), y2 + _mm(10), bw - _mm(16), _mm(10),
+                    "Вариант рамки под макет", "Реклама", ctx.gray)
+    bx = mx + min(cw * 0.55, _mm(110)) + _mm(8)
+    if bx + _mm(65) < ctx.page_w - _mm(geo.MARGIN_R):
+        with _group(ctx, "Рамка · двойная", "ad_frame_double"):
+            _nested_frame(ctx, bx, y2, min(_mm(70), cw - (bx - mx)), _mm(34), ctx.orange, ctx.purple)
+            _text_frame(ctx, bx + _mm(6), y2 + _mm(10), _mm(55), _mm(10),
+                        "Двойная", "Реклама", ctx.gray)
     _folio(ctx)
 
 
@@ -1147,8 +1330,8 @@ def _layout_catalog(ctx: _Ctx) -> None:
     _set_layer(ctx, "kit_guides")
     _text_frame(
         ctx, mx, cursor_y, ctx.page_w - mx - _mm(geo.MARGIN_R), _mm(8),
-        f"Околица CS3 Super Genius · {COLOR_PROFILE_DEFAULT} · "
-        f"{geo.PAGE_W:.2f}×{geo.PAGE_H:.2f} мм · Groups+Layers+Overprint",
+        f"Околица CS3 Kit · {COLOR_PROFILE_DEFAULT} · "
+        f"{geo.PAGE_W:.2f}×{geo.PAGE_H:.2f} мм · Groups + Overprint",
         "Метка каталога", ctx.gray, name="kit_catalog_title",
     )
     cursor_y += _mm(10)

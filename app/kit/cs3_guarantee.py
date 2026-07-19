@@ -6,16 +6,15 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from app.inx.smoke import smoke_test_inx
-from app.kit.preflight import PreflightReport, run_kit_preflight
+from app.kit.preflight import run_kit_preflight
 
 
 REQUIRED_MARKERS = (
     'DOMVersion="5.0"',
+    'style="33"',
     'readerVersion="5.0"',
     'Space="CMYK"',
-    "Layer/",
     "Group/",
-    "ObjectStyle/",
 )
 
 
@@ -88,6 +87,21 @@ def run_cs3_open_guarantee(
         "Group+Name" if has_named_group else "нет именованной группы",
     ))
 
+    # CS3-hostile constructs must be absent
+    hostile = []
+    if "RootLayerGroup" in xml or "ItemLayer=" in xml:
+        hostile.append("Layers/ItemLayer")
+    if "RootObjectStyleGroup" in xml or "AppliedObjectStyle=" in xml:
+        hostile.append("ObjectStyle")
+    if 'style="50"' in xml:
+        hostile.append('AID style="50"')
+    report.add(GuaranteeItem(
+        "cs3_safe_profile",
+        not hostile,
+        f"[{label}] CS3-safe профиль (без Layers/ObjectStyles/style=50)",
+        "ok" if not hostile else f"hostile: {', '.join(hostile)}",
+    ))
+
     if "article_column" in (include or []) or "kit_article_col1" in xml:
         threaded = "kit_article_col2" in xml and "NextTextFrame" in xml
         report.add(GuaranteeItem(
@@ -112,11 +126,10 @@ def format_open_guarantee(
         f"Файлов проверено: {len(reports)}",
         "",
         "Критерии гарантии открытия в Adobe InDesign CS3:",
-        "  • DOMVersion 5.0 + Adobe AID processing instruction",
+        "  • AID style=33 + DOMVersion 5.0 + readerVersion 5.0",
         "  • Только Process CMYK swatches",
-        "  • Layers + Groups + Object Styles",
+        "  • Named Groups (Copy/Paste), без Layers/Object Styles",
         "  • Smoke structure (Story↔TextFrame links)",
-        "  • Named Group — один Copy/Paste на сцену",
         "",
         "РЕЗУЛЬТАТЫ:",
     ]
@@ -132,7 +145,7 @@ def format_open_guarantee(
         "РУЧНОЙ SMOKE (60 сек):",
         "  1. Установить Fonts/ из ZIP",
         "  2. File → Open каждый .inx",
-        "  3. Layers видны, Swatches = CMYK",
+        "  3. Swatches = CMYK",
         "  4. Выделить Group → Copy → Paste на новую полосу",
         "  5. View → Overprint Preview",
         "",

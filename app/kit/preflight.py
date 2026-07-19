@@ -110,19 +110,21 @@ def run_kit_preflight(inx_bytes: bytes, include: list[str] | None = None) -> Pre
     # Super Genius structure checks
     layer_count = sum(1 for el in root.iter() if etree.QName(el).localname == "Layer")
     group_count = sum(1 for el in root.iter() if etree.QName(el).localname == "Group")
-    ostyle_count = sum(1 for el in root.iter() if etree.QName(el).localname == "ObjectStyle")
     named = sum(1 for el in root.iter() if el.get("Name") and etree.QName(el).localname in (
-        "TextFrame", "Rectangle", "GraphicLine", "Group", "Layer",
+        "TextFrame", "Rectangle", "GraphicLine", "Group",
     ))
     overprint = xml.count('OverprintFill="true"') + xml.count('OverprintStroke="true"')
     threaded = 'NextTextFrame="TextFrame/' in xml or "kit_article_col2" in xml
 
-    if layer_count >= 4:
-        report.add(PreflightItem("layers", "pass", f"Layers: {layer_count}",
-                                 "Masthead / Article / News / Ads / Decor"))
+    # Layers намеренно не используем (CS3-safe)
+    if layer_count == 0 and "ItemLayer=" not in xml:
+        report.add(PreflightItem("layers", "pass", "CS3-safe: без кастомных Layers",
+                                 "дефолтный слой InDesign"))
+    elif layer_count >= 1:
+        report.add(PreflightItem("layers", "warn", f"Layers: {layer_count}",
+                                 "кастомные Layers могут мешать открытию в CS3"))
     else:
-        report.add(PreflightItem("layers", "warn", f"Layers мало: {layer_count}",
-                                 "Ожидались именованные слои"))
+        report.add(PreflightItem("layers", "warn", "ItemLayer без RootLayerGroup", ""))
 
     if group_count >= 1:
         report.add(PreflightItem("groups", "pass", f"Groups: {group_count}",
@@ -130,10 +132,11 @@ def run_kit_preflight(inx_bytes: bytes, include: list[str] | None = None) -> Pre
     else:
         report.add(PreflightItem("groups", "warn", "Нет Group — сложный multi-select", ""))
 
-    if ostyle_count >= 3:
-        report.add(PreflightItem("object_styles", "pass", f"Object styles: {ostyle_count}", ""))
+    if "ObjectStyle/" in xml or "AppliedObjectStyle=" in xml:
+        report.add(PreflightItem("object_styles", "warn", "Object styles в INX",
+                                 "CS3-safe профиль их не использует"))
     else:
-        report.add(PreflightItem("object_styles", "warn", f"Object styles: {ostyle_count}", ""))
+        report.add(PreflightItem("object_styles", "pass", "Без Object styles (CS3-safe)", ""))
 
     if named >= 5:
         report.add(PreflightItem("named_objects", "pass", f"Named objects: {named}",

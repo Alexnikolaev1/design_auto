@@ -16,7 +16,8 @@ from app.inx.schema import InxValidationError, validate_inx
 
 
 AID_PI_RE = re.compile(
-    br'<\?aid\s+style="50"\s+type="document"\s+readerVersion="5\.0"',
+    br'<\?aid\s+style="33"\s+type="document"[^?]*DOMVersion="5\.0"[^?]*'
+    br'readerVersion="5\.0"',
     re.IGNORECASE,
 )
 

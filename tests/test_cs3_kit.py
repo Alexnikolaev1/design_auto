@@ -107,15 +107,17 @@ def test_kit_inx_super_genius_features():
     texts = compose_kit_selection("", use_ai=False)["texts"]
     raw = build_kit_inx(include=include, texts=texts)
     assert b'DOMVersion="5.0"' in raw
+    assert b'style="33"' in raw
     assert b'Space="CMYK"' in raw
 
     smoke = smoke_test_inx(raw)
     assert smoke.passed, smoke.errors
 
     xml = raw.decode("utf-8")
-    assert "Layer/" in xml
     assert "Group/" in xml
-    assert "ObjectStyle/" in xml
+    assert "RootLayerGroup" not in xml
+    assert "ItemLayer=" not in xml
+    assert "ObjectStyle/" not in xml
     assert 'OverprintFill="true"' in xml or 'OverprintStroke="true"' in xml
     assert "kit_masthead_logo" in xml
     assert "kit_article_col1" in xml
@@ -141,7 +143,8 @@ def test_scene_inx_smoke_groups_preflight():
         assert pf.passed, (scene.id, [i for i in pf.items if i.severity == "fail"])
         xml = raw.decode("utf-8")
         assert "Group/" in xml, scene.id
-        assert "Layer/" in xml, scene.id
+        assert "RootLayerGroup" not in xml, scene.id
+        assert b'style="33"' in raw
 
 
 def test_kit_preview_and_checklist():

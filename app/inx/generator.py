@@ -431,6 +431,8 @@ def build_inx(parsed: ParsedDocument, plan: LayoutPlan,
 
     body_bytes = etree.tostring(doc, pretty_print=True, encoding="UTF-8")
     xml_declaration = b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
-    aid_pi = (b'<?aid style="50" type="document" readerVersion="5.0" '
-              b'featureSet="257" product="5.0(370)" ?>\n')
+    aid_pi = (
+        b'<?aid style="33" type="document" DOMVersion="5.0" '
+        b'readerVersion="5.0" featureSet="257" product="5.0(370)" ?>\n'
+    )
     return xml_declaration + aid_pi + body_bytes
