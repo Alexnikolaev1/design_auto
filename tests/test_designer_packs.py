@@ -27,9 +27,20 @@ def test_decor_and_backdrop():
     for pid in ("pack_decor", "pack_backdrop"):
         pack = get_pack(pid)
         assert pack is not None
-        raw = build_kit_inx(include=list(pack.elements), texts={"wave_caption": "В эти дни"})
+        raw = build_kit_inx(
+            include=list(pack.elements),
+            texts={"wave_caption": "В эти дни"},
+            pack_id=pid,
+        )
         assert smoke_test_inx(raw).passed
         assert run_cs3_open_guarantee(raw, include=list(pack.elements)).passed
+        xml = raw.decode("utf-8")
+        assert "Group/" in xml
+        assert "RootLayerGroup" not in xml
+        # полоса должна быть плотной, не «один бордюр внизу»
+        assert xml.count("<Group ") >= 6
+        assert xml.count("<Rectangle") >= 40
+        assert "Стили: Заголовок" not in xml
 
 
 def test_banner_action():

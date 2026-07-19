@@ -47,9 +47,20 @@ def build_kit_inx(
     texts: dict[str, str] | None = None,
     scene_id: str | None = None,
     ad_format_id: str | None = None,
+    pack_id: str | None = None,
 ) -> bytes:
     font_manager.scan_fonts()
     scene = get_scene(scene_id) if scene_id else None
+
+    pack = None
+    if pack_id:
+        from app.kit.packs import get_pack
+        pack = get_pack(pack_id)
+        if pack is not None:
+            if not ad_format_id and pack.ad_format_id:
+                ad_format_id = pack.ad_format_id
+            if include is None:
+                include = list(pack.elements)
 
     # Рекламный формат как отдельная «сцена»
     ad_fmt = None
@@ -80,6 +91,22 @@ def build_kit_inx(
 
     def want(eid: str) -> bool:
         return include_set is None or eid in include_set
+
+    # Явный тип полосы по pack_id (не эвристика — иначе снова «каталог с одним бордюром»)
+    if pack is not None:
+        kind_map = {
+            "pack_decor": "ornament",
+            "pack_backdrop": "backdrop",
+            "pack_masthead": "masthead",
+            "pack_photo": "photo",
+            "pack_weather": "weather",
+            "pack_shorts": "shorts",
+            "pack_teasers": "teasers",
+            "pack_styles": "styles",
+        }
+        pack_kind = kind_map.get(pack.id)
+    else:
+        pack_kind = _pack_gallery_kind(include_set)
 
     page_w = _mm(geo.PAGE_W)
     page_h = _mm(geo.PAGE_H)
@@ -254,7 +281,7 @@ def build_kit_inx(
         with _group(ctx, f"SCENE · {scene.name}", "kit_scene"):
             _layout_scene(ctx, scene.id)
     else:
-        kind = _pack_gallery_kind(include_set)
+        kind = pack_kind
         if kind == "ornament":
             _layout_ornament_page(ctx)
         elif kind == "backdrop":
@@ -714,156 +741,193 @@ def _pack_gallery_kind(include_set: set[str] | None) -> str | None:
     return None
 
 
+def _h_bar(ctx: _Ctx, x: float, y: float, w: float, h: float, fill: str) -> None:
+    """Толстая горизонтальная полоса (вместо GraphicLine — CS3 всегда рисует)."""
+    _rect(ctx, x, y, w, max(h, 0.5), fill=fill, stroke=None, stroke_w=0)
+
+
 def _layout_ornament_page(ctx: _Ctx) -> None:
-    """Целая полоса разнообразных узоров — каждый блок отдельный Group."""
+    """Полоса узоров на весь лист: крупные Rectangle-блоки (CS3-safe, видно сразу)."""
     mx = _mm(geo.MARGIN_L)
     my = _mm(geo.MARGIN_T)
-    content_w = ctx.page_w - mx - _mm(geo.MARGIN_R)
+    cw = ctx.page_w - mx - _mm(geo.MARGIN_R)
     caption = ctx.texts.get("wave_caption", "В эти дни")
 
     _text_frame(
-        ctx, mx, my - _mm(1), content_w, _mm(5),
-        "Полоса узоров · Group → Copy/Paste · фирменные цвета Околицы",
+        ctx, mx, my - _mm(1), cw, _mm(5),
+        "ПОЛОСА УЗОРОВ · каждый блок = Group · Copy/Paste в свой макет",
         "Метка каталога", ctx.gray, name="kit_ornament_title",
     )
     y = my + _mm(6)
 
-    with _group(ctx, "Узор · двойная волна", "orn_wave"):
-        _orn_label(ctx, mx, y, "1. Двойная волна")
-        _double_wave(ctx, mx, y + _mm(5), content_w)
-        _dot_row(ctx, mx, y + _mm(11), content_w, n=22, fill=ctx.orange)
+    with _group(ctx, "Узор · лента-шапка", "orn_ribbon_top"):
+        _h_bar(ctx, mx, y, cw, _mm(9), ctx.purple)
+        _h_bar(ctx, mx, y + _mm(9), cw, _mm(2.5), ctx.orange)
+        _text_frame(ctx, mx + _mm(4), y + _mm(1.5), cw - _mm(8), _mm(6),
+                    "Сибирская околица · фирменный бордюр",
+                    "Короткие шапка", ctx.paper, fill_override=ctx.paper, overprint=False)
     y += _mm(15)
 
-    with _group(ctx, "Узор · фестоны и бусины", "orn_scallop"):
-        _orn_label(ctx, mx, y, "2. Фестон / гирлянда")
-        _scallop_edge(ctx, mx, y + _mm(6), content_w, n=10)
-        _line(ctx, mx, y + _mm(10), mx + content_w, y + _mm(10), ctx.gray, 0.35)
-        _dot_row(ctx, mx, y + _mm(12.5), content_w, n=16, size=_mm(1.0), fill=ctx.purple)
-    y += _mm(16)
+    with _group(ctx, "Узор · тройные линейки", "orn_rules"):
+        _orn_label(ctx, mx, y, "1. Разделители (тройная линейка)")
+        _h_bar(ctx, mx, y + _mm(5), cw, _mm(1.4), ctx.black)
+        _h_bar(ctx, mx, y + _mm(7.2), cw, _mm(0.55), ctx.black)
+        _h_bar(ctx, mx, y + _mm(8.4), cw, _mm(0.55), ctx.black)
+        _h_bar(ctx, mx, y + _mm(11), cw * 0.42, _mm(0.7), ctx.gray)
+        _rect(ctx, mx + cw * 0.5 - _mm(4), y + _mm(9), _mm(8), _mm(8),
+              fill=None, stroke=ctx.purple, stroke_w=1.0)
+        _h_bar(ctx, mx + cw * 0.5 + _mm(6), y + _mm(11), cw * 0.42 - _mm(6), _mm(0.7), ctx.gray)
+    y += _mm(20)
 
-    with _group(ctx, "Узор · меандр", "orn_greek"):
-        _orn_label(ctx, mx, y, "3. Меандр (греческий ключ)")
-        _greek_key(ctx, mx, y + _mm(4), content_w)
-    y += _mm(14)
+    with _group(ctx, "Узор · шахматный бордюр", "orn_checker"):
+        _orn_label(ctx, mx, y, "2. Шахматный бордюр")
+        _checker_band(ctx, mx, y + _mm(5), cw, _mm(7), n=18)
+        _checker_band(ctx, mx, y + _mm(13), cw, _mm(4), n=24)
+    y += _mm(22)
 
-    with _group(ctx, "Узор · ромбы", "orn_diamonds"):
-        _orn_label(ctx, mx, y, "4. Цепь ромбов")
-        _diamond_chain(ctx, mx, y + _mm(7), content_w, n=9)
-    y += _mm(14)
+    with _group(ctx, "Узор · ряд плашек", "orn_tiles"):
+        _orn_label(ctx, mx, y, "3. Ряд цветных плашек")
+        n, gap = 8, _mm(2)
+        tw = (cw - gap * (n - 1)) / n
+        colors = [ctx.purple, ctx.orange, ctx.teal, ctx.red, ctx.purple, ctx.orange, ctx.teal, ctx.red]
+        for i in range(n):
+            _rect(ctx, mx + i * (tw + gap), y + _mm(5), tw, _mm(10),
+                  fill=colors[i], stroke=None, stroke_w=0)
+    y += _mm(20)
 
-    with _group(ctx, "Узор · тройная линейка", "orn_rules"):
-        _orn_label(ctx, mx, y, "5. Разделители / тройная линейка")
-        _triple_rule(ctx, mx, y + _mm(5), content_w)
-        mid = mx + content_w / 2
-        _line(ctx, mx, y + _mm(12), mid - _mm(8), y + _mm(12), ctx.gray, 0.45,
-              self_id="GraphicLine/kit_decor_rule", name="kit_decor_rule")
-        _rosette(ctx, mid, y + _mm(12), _mm(5), petals=6)
-        _line(ctx, mid + _mm(8), y + _mm(12), mx + content_w, y + _mm(12), ctx.gray, 0.45,
-              self_id="GraphicLine/kit_decor_divider", name="kit_decor_divider")
-    y += _mm(18)
+    with _group(ctx, "Узор · рамка с уголками", "orn_corners"):
+        _orn_label(ctx, mx, y, "4. Рамка с уголками")
+        bh = _mm(28)
+        _rect(ctx, mx, y + _mm(4), cw, bh, fill=ctx.paper, stroke=ctx.purple, stroke_w=1.25)
+        _rect(ctx, mx + _mm(3), y + _mm(7), cw - _mm(6), bh - _mm(6),
+              fill=None, stroke=ctx.orange, stroke_w=0.6)
+        _corners(ctx, mx + _mm(2), y + _mm(6), cw - _mm(4), bh - _mm(4))
+        _text_frame(ctx, mx + _mm(10), y + _mm(12), cw - _mm(20), _mm(10),
+                    caption, "Рубрика", ctx.purple, fill_override=ctx.purple, overprint=False)
+    y += _mm(38)
 
-    with _group(ctx, "Узор · розетки и звёзды", "orn_rosettes"):
-        _orn_label(ctx, mx, y, "6. Розетки и звёзды")
-        _rosette(ctx, mx + _mm(22), y + _mm(13), _mm(10), petals=6)
-        _star_burst(ctx, mx + _mm(55), y + _mm(13), _mm(9), rays=8)
-        _rosette(ctx, mx + _mm(90), y + _mm(13), _mm(8), petals=8)
-        _star_burst(ctx, mx + _mm(125), y + _mm(13), _mm(8), rays=8)
-        _rosette(ctx, mx + _mm(160), y + _mm(13), _mm(9), petals=6)
-    y += _mm(28)
-
-    with _group(ctx, "Узор · уголки и лоза", "orn_corners"):
-        _orn_label(ctx, mx, y, "7. Уголки, завитки и лоза")
-        _corners(ctx, mx, y + _mm(4), _mm(30), _mm(26))
-        _flourish_corner(ctx, mx + _mm(38), y + _mm(4), _mm(12), flip_x=1, flip_y=1)
-        _flourish_corner(ctx, mx + _mm(54), y + _mm(4), _mm(12), flip_x=-1, flip_y=1)
-        _flourish_corner(ctx, mx + _mm(38), y + _mm(18), _mm(12), flip_x=1, flip_y=-1)
-        _flourish_corner(ctx, mx + _mm(54), y + _mm(18), _mm(12), flip_x=-1, flip_y=-1)
-        _vine_strip(ctx, mx + _mm(85), y + _mm(3), _mm(28), leaves=5)
-        _vine_strip(ctx, mx + _mm(100), y + _mm(3), _mm(28), leaves=5)
-        _checker_band(ctx, mx + _mm(120), y + _mm(8), _mm(55), _mm(6), n=10)
-    y += _mm(34)
-
-    with _group(ctx, "Узор · лента-шашка", "orn_ribbon"):
-        _orn_label(ctx, mx, y, "8. Лента и шашечный бордюр")
-        _ribbon_bar(ctx, mx, y + _mm(5), content_w, _mm(7), ctx.purple)
-        _checker_band(ctx, mx, y + _mm(15), content_w, _mm(5), n=16)
-    y += _mm(24)
-
-    with _group(ctx, "Узор · рамка врезки", "orn_frame"):
-        _orn_label(ctx, mx, y, "9. Рамка врезки / подложка")
-        fw = min(content_w, _mm(175))
-        _ornate_frame(ctx, mx, y + _mm(4), fw, _mm(36), caption)
+    with _group(ctx, "Узор · три модуля", "orn_triptych"):
+        _orn_label(ctx, mx, y, "5. Три модуля (оранжевый / бирюзовый / фиолетовый)")
+        col_w = (cw - _mm(6)) / 3
+        bh = _mm(32)
+        specs = (
+            (ctx.orange_tint, ctx.orange, "врезка"),
+            (ctx.paper, ctx.teal, "цитата"),
+            (ctx.paper, ctx.purple, "анонс"),
+        )
+        for i, (fill, stroke, label) in enumerate(specs):
+            x = mx + i * (col_w + _mm(3))
+            _rect(ctx, x, y + _mm(5), col_w, bh, fill=fill, stroke=stroke, stroke_w=1.1)
+            _h_bar(ctx, x + _mm(3), y + _mm(8), col_w - _mm(6), _mm(1.2), stroke)
+            _h_bar(ctx, x + _mm(3), y + _mm(10), col_w - _mm(6), _mm(0.5), stroke)
+            _dot_row(ctx, x + _mm(4), y + _mm(14), col_w - _mm(8), n=8, fill=stroke)
+            _text_frame(ctx, x + _mm(4), y + _mm(18), col_w - _mm(8), _mm(12),
+                        f"{caption} · {label}", "Рубрика", stroke,
+                        fill_override=stroke, overprint=False)
     y += _mm(44)
 
-    with _group(ctx, "Узор · бордюр-комбо", "orn_combo"):
-        _orn_label(ctx, mx, y, "10. Бордюр-комбо (волна + ромбы + фестон)")
-        _wave_line(ctx, mx, y + _mm(5), content_w, periods=5, weight=0.8, segs=12)
-        _diamond_chain(ctx, mx, y + _mm(12), content_w, n=9)
-        _scallop_edge(ctx, mx, y + _mm(19), content_w, n=10)
-        _dot_row(ctx, mx, y + _mm(24), content_w, n=20, size=_mm(1.1), fill=ctx.teal)
+    with _group(ctx, "Узор · большая врезка", "orn_frame"):
+        _orn_label(ctx, mx, y, "6. Большая врезка")
+        bh = _mm(40)
+        _rect(ctx, mx, y + _mm(4), cw, bh, fill=ctx.paper, stroke=ctx.purple, stroke_w=1.6,
+              self_id="Rectangle/kit_decor_wave_border", name="kit_decor_wave_border")
+        _rect(ctx, mx + _mm(3), y + _mm(7), cw - _mm(6), bh - _mm(6),
+              fill=None, stroke=ctx.orange, stroke_w=0.7)
+        _h_bar(ctx, mx + _mm(8), y + _mm(10), cw - _mm(16), _mm(1.5), ctx.purple)
+        _h_bar(ctx, mx + _mm(8), y + _mm(12.2), cw - _mm(16), _mm(0.5), ctx.orange)
+        _dot_row(ctx, mx + _mm(10), y + _mm(16), cw - _mm(20), n=20, fill=ctx.purple)
+        _corners(ctx, mx + _mm(5), y + _mm(9), cw - _mm(10), bh - _mm(10))
+        _text_frame(ctx, mx + _mm(12), y + _mm(20), cw - _mm(24), _mm(14),
+                    caption, "Рубрика", ctx.purple, fill_override=ctx.purple,
+                    self_story_tag="kit_wave_caption", name="kit_wave_caption", overprint=False)
+        _h_bar(ctx, mx + _mm(8), y + _mm(36), cw - _mm(16), _mm(0.5), ctx.orange)
+        _h_bar(ctx, mx + _mm(8), y + _mm(37.5), cw - _mm(16), _mm(1.5), ctx.purple)
+    y += _mm(50)
+
+    with _group(ctx, "Узор · нижний бордюр", "orn_combo"):
+        _orn_label(ctx, mx, y, "7. Комбо-бордюр (полосы + шахматка + бусины)")
+        _h_bar(ctx, mx, y + _mm(5), cw, _mm(3), ctx.purple)
+        _h_bar(ctx, mx, y + _mm(8.5), cw, _mm(1.5), ctx.orange)
+        _h_bar(ctx, mx, y + _mm(10.5), cw, _mm(1.5), ctx.teal)
+        _checker_band(ctx, mx, y + _mm(14), cw, _mm(6), n=16)
+        _dot_row(ctx, mx, y + _mm(22), cw, n=22, size=_mm(1.4), fill=ctx.red)
+        _h_bar(ctx, mx, y + _mm(25), cw, _mm(1.2), ctx.black)
 
     _folio(ctx)
 
 
 def _layout_backdrop_page(ctx: _Ctx) -> None:
-    """Полоса разнообразных подложек на всю страницу."""
+    """Полоса подложек на весь лист — крупные заполненные блоки."""
     mx = _mm(geo.MARGIN_L)
     my = _mm(geo.MARGIN_T)
-    content_w = ctx.page_w - mx - _mm(geo.MARGIN_R)
+    cw = ctx.page_w - mx - _mm(geo.MARGIN_R)
     caption = ctx.texts.get("wave_caption", "В эти дни")
 
     _text_frame(
-        ctx, mx, my, content_w, _mm(5),
-        "Подложки · выберите Group → Copy/Paste под врезку, цитату или анонс",
+        ctx, mx, my, cw, _mm(5),
+        "ПОДЛОЖКИ · выберите Group → Copy/Paste под врезку / цитату / анонс",
         "Метка каталога", ctx.gray, name="kit_backdrop_title",
     )
     y = my + _mm(8)
 
     with _group(ctx, "Подложка · орнамент", "backdrop_main"):
-        _ornate_frame(ctx, mx, y, content_w, _mm(42), caption)
-    y += _mm(48)
+        bh = _mm(44)
+        _rect(ctx, mx, y, cw, bh, fill=ctx.paper, stroke=ctx.purple, stroke_w=1.6)
+        _rect(ctx, mx + _mm(3), y + _mm(3), cw - _mm(6), bh - _mm(6),
+              fill=None, stroke=ctx.orange, stroke_w=0.7)
+        _h_bar(ctx, mx + _mm(8), y + _mm(6), cw - _mm(16), _mm(2), ctx.purple)
+        _checker_band(ctx, mx + _mm(10), y + _mm(10), cw - _mm(20), _mm(4), n=14)
+        _corners(ctx, mx + _mm(5), y + _mm(5), cw - _mm(10), bh - _mm(10))
+        _text_frame(ctx, mx + _mm(14), y + _mm(18), cw - _mm(28), _mm(14),
+                    caption, "Рубрика", ctx.purple, fill_override=ctx.purple, overprint=False)
+        _h_bar(ctx, mx + _mm(8), y + bh - _mm(8), cw - _mm(16), _mm(2), ctx.purple)
+    y += _mm(50)
 
     with _group(ctx, "Подложка · оранжевая", "backdrop_orange"):
-        _rect(ctx, mx, y, _mm(90), _mm(38), fill=ctx.orange_tint, stroke=ctx.orange, stroke_w=1.1)
-        _scallop_edge(ctx, mx + _mm(4), y + _mm(3), _mm(82), n=8)
-        _dot_row(ctx, mx + _mm(6), y + _mm(8), _mm(78), n=12, fill=ctx.orange)
-        _text_frame(ctx, mx + _mm(6), y + _mm(14), _mm(78), _mm(14),
+        bw = (cw - _mm(4)) / 2
+        _rect(ctx, mx, y, bw, _mm(40), fill=ctx.orange_tint, stroke=ctx.orange, stroke_w=1.2)
+        _h_bar(ctx, mx + _mm(4), y + _mm(4), bw - _mm(8), _mm(2), ctx.orange)
+        _dot_row(ctx, mx + _mm(6), y + _mm(10), bw - _mm(12), n=10, fill=ctx.orange)
+        _text_frame(ctx, mx + _mm(6), y + _mm(14), bw - _mm(12), _mm(16),
                     caption, "Рубрика", ctx.orange, fill_override=ctx.orange, overprint=False)
 
     with _group(ctx, "Подложка · бирюзовая", "backdrop_teal"):
-        _rect(ctx, mx + _mm(98), y, content_w - _mm(98), _mm(38),
-              fill=ctx.paper, stroke=ctx.teal, stroke_w=1.25)
-        _double_wave(ctx, mx + _mm(104), y + _mm(6), content_w - _mm(110))
-        _text_frame(ctx, mx + _mm(104), y + _mm(14), content_w - _mm(112), _mm(14),
+        bw = (cw - _mm(4)) / 2
+        x2 = mx + bw + _mm(4)
+        _rect(ctx, x2, y, bw, _mm(40), fill=ctx.paper, stroke=ctx.teal, stroke_w=1.3)
+        _h_bar(ctx, x2 + _mm(4), y + _mm(5), bw - _mm(8), _mm(2.5), ctx.teal)
+        _h_bar(ctx, x2 + _mm(4), y + _mm(9), bw - _mm(8), _mm(1), ctx.purple)
+        _text_frame(ctx, x2 + _mm(6), y + _mm(14), bw - _mm(12), _mm(16),
                     caption, "Рубрика", ctx.teal, fill_override=ctx.teal, overprint=False)
-    y += _mm(44)
+    y += _mm(46)
 
     with _group(ctx, "Подложка · уголки", "backdrop_corners"):
-        _nested_frame(ctx, mx, y, content_w, _mm(34), ctx.purple, ctx.orange)
-        _text_frame(ctx, mx + _mm(16), y + _mm(10), content_w - _mm(32), _mm(12),
+        _nested_frame(ctx, mx, y, cw, _mm(36), ctx.purple, ctx.orange)
+        _text_frame(ctx, mx + _mm(16), y + _mm(12), cw - _mm(32), _mm(12),
                     caption, "Рубрика", ctx.purple, fill_override=ctx.purple, overprint=False)
-    y += _mm(40)
-
-    with _group(ctx, "Подложка · цитата", "backdrop_quote"):
-        _rect(ctx, mx, y, content_w, _mm(36), fill=ctx.paper, stroke=ctx.red, stroke_w=0.75)
-        _rect(ctx, mx, y, _mm(4), _mm(36), fill=ctx.red, stroke=None, stroke_w=0)
-        _triple_rule(ctx, mx + _mm(10), y + _mm(6), content_w - _mm(20))
-        _text_frame(ctx, mx + _mm(12), y + _mm(14), content_w - _mm(24), _mm(14),
-                    caption, "Лид", ctx.black, name="kit_backdrop_quote")
     y += _mm(42)
 
+    with _group(ctx, "Подложка · цитата", "backdrop_quote"):
+        _rect(ctx, mx, y, cw, _mm(34), fill=ctx.paper, stroke=ctx.red, stroke_w=0.8)
+        _rect(ctx, mx, y, _mm(5), _mm(34), fill=ctx.red, stroke=None, stroke_w=0)
+        _h_bar(ctx, mx + _mm(12), y + _mm(5), cw - _mm(20), _mm(1.2), ctx.black)
+        _h_bar(ctx, mx + _mm(12), y + _mm(7), cw - _mm(20), _mm(0.5), ctx.black)
+        _text_frame(ctx, mx + _mm(12), y + _mm(12), cw - _mm(20), _mm(14),
+                    caption, "Лид", ctx.black, name="kit_backdrop_quote")
+    y += _mm(40)
+
     with _group(ctx, "Подложка · лента", "backdrop_ribbon"):
-        _ribbon_bar(ctx, mx, y, content_w, _mm(14), ctx.purple)
-        _text_frame(ctx, mx + _mm(8), y + _mm(2), content_w - _mm(16), _mm(10),
+        _ribbon_bar(ctx, mx, y, cw, _mm(16), ctx.purple)
+        _text_frame(ctx, mx + _mm(8), y + _mm(3), cw - _mm(16), _mm(10),
                     caption, "Короткие шапка", ctx.paper, fill_override=ctx.paper,
                     overprint=False, name="kit_backdrop_ribbon_txt")
-    y += _mm(20)
+    y += _mm(22)
 
     with _group(ctx, "Подложка · виньетка", "backdrop_vignette"):
-        _rect(ctx, mx, y, content_w, _mm(40), fill=ctx.paper, stroke=ctx.purple, stroke_w=0.5)
-        _diamond_chain(ctx, mx + _mm(8), y + _mm(8), content_w - _mm(16), n=8)
-        _corners(ctx, mx + _mm(6), y + _mm(6), content_w - _mm(12), _mm(28))
-        _text_frame(ctx, mx + _mm(20), y + _mm(16), content_w - _mm(40), _mm(12),
+        _rect(ctx, mx, y, cw, _mm(38), fill=ctx.paper, stroke=ctx.purple, stroke_w=0.6)
+        _checker_band(ctx, mx + _mm(8), y + _mm(5), cw - _mm(16), _mm(5), n=12)
+        _corners(ctx, mx + _mm(4), y + _mm(4), cw - _mm(8), _mm(30))
+        _text_frame(ctx, mx + _mm(16), y + _mm(14), cw - _mm(32), _mm(12),
                     caption, "Рубрика", ctx.purple, fill_override=ctx.purple, overprint=False)
 
     _folio(ctx)

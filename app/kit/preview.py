@@ -38,6 +38,7 @@ def render_kit_preview_png(
     out_path: Path,
     scale: float = 2.0,
     scene_id: str | None = None,
+    pack_id: str | None = None,
 ) -> Path:
     """Рисует упрощённый каталог/сцену (RGB-превью; в INX цвета CMYK)."""
     scene = get_scene(scene_id) if scene_id else None
@@ -46,6 +47,22 @@ def render_kit_preview_png(
         texts = {**scene.default_texts, **(texts or {})}
     else:
         want = set(include)
+
+    # Явный pack_id важнее эвристики — иначе снова «один бордюр + Стили:»
+    if pack_id:
+        kind_map = {
+            "pack_decor": "ornament",
+            "pack_backdrop": "backdrop",
+            "pack_masthead": "masthead",
+            "pack_photo": "photo",
+            "pack_weather": "weather",
+            "pack_shorts": "shorts",
+            "pack_teasers": "teasers",
+            "pack_styles": "styles",
+        }
+        forced = kind_map.get(pack_id)
+    else:
+        forced = None
 
     pw = int(geo.PAGE_W * MM_TO_PT * scale)
     ph = int(geo.PAGE_H * MM_TO_PT * scale)
@@ -66,15 +83,23 @@ def render_kit_preview_png(
 
     decor = {"decor_rule", "decor_corners", "decor_wave_border", "decor_divider"}
     core = want - {"styles_pack", "folio_line"}
-    is_ornament = bool(core) and core <= decor and len(core & decor) >= 3
-    is_backdrop = core == {"decor_wave_border", "decor_corners"}
+    is_ornament = forced == "ornament" or (
+        forced is None and bool(core) and core <= decor and len(core & decor) >= 3
+    )
+    is_backdrop = forced == "backdrop" or (
+        forced is None and core == {"decor_wave_border", "decor_corners"}
+    )
     mast = {"masthead_logo", "masthead_issue", "masthead_rubric_line"}
-    is_masthead = bool(core) and core <= mast and "masthead_logo" in core
-    is_photo = core in ({"article_photo_frame", "decor_corners"}, {"article_photo_frame"})
-    is_weather = core == {"weather_badge"}
-    is_shorts = core == {"news_header", "news_card"}
-    is_teasers = "cover_teaser" in core
-    is_styles = not core
+    is_masthead = forced == "masthead" or (
+        forced is None and bool(core) and core <= mast and "masthead_logo" in core
+    )
+    is_photo = forced == "photo" or (
+        forced is None and core in ({"article_photo_frame", "decor_corners"}, {"article_photo_frame"})
+    )
+    is_weather = forced == "weather" or (forced is None and core == {"weather_badge"})
+    is_shorts = forced == "shorts" or (forced is None and core == {"news_header", "news_card"})
+    is_teasers = forced == "teasers" or (forced is None and "cover_teaser" in core)
+    is_styles = forced == "styles" or (forced is None and not core)
 
     if is_ornament or is_backdrop:
         return _render_ornament_preview(
@@ -266,98 +291,92 @@ def _render_ornament_preview(
             )
         draw.ellipse([cx - r * 0.2, cy - r * 0.2, cx + r * 0.2, cy + r * 0.2], outline=orange, width=2)
 
+    caption = texts.get("wave_caption", "В эти дни")
     if backdrop:
         y = my + mm(8)
-        caption = texts.get("wave_caption", "В эти дни")
-        # ornate
-        draw.rectangle([mx, y, mx + cw, y + mm(40)], outline=purple, width=3)
-        wave(mx + mm(6), y + mm(5), cw - mm(12), periods=6)
-        scallop(mx + mm(6), y + mm(34), cw - mm(12), n=10)
-        draw.text((mx + mm(24), y + mm(16)), caption, font=rub_f, fill=purple)
-        y += mm(48)
-        # pair
-        draw.rectangle([mx, y, mx + mm(88), y + mm(34)], fill=rgb("OkolicaOrangeTint"), outline=orange, width=2)
+        draw.rectangle([mx, y, mx + cw, y + mm(42)], outline=purple, width=3)
+        draw.rectangle([mx + mm(8), y + mm(6), mx + cw - mm(8), y + mm(10)], fill=purple)
+        for i in range(12):
+            col = purple if i % 2 == 0 else orange
+            draw.rectangle([mx + mm(10) + i * mm(12), y + mm(12), mx + mm(20) + i * mm(12), y + mm(16)], fill=col)
+        draw.text((mx + mm(20), y + mm(22)), caption, font=rub_f, fill=purple)
+        y += mm(50)
+        bw = (cw - mm(4)) / 2
+        draw.rectangle([mx, y, mx + bw, y + mm(36)], fill=rgb("OkolicaOrangeTint"), outline=orange, width=2)
         draw.text((mx + mm(8), y + mm(12)), caption, font=rub_f, fill=orange)
-        draw.rectangle([mx + mm(96), y, mx + cw, y + mm(34)], outline=teal, width=2)
-        wave(mx + mm(102), y + mm(8), cw - mm(108), color=teal, periods=5)
-        draw.text((mx + mm(105), y + mm(14)), caption, font=rub_f, fill=teal)
-        y += mm(42)
-        # nested / quote / ribbon / vignette
-        draw.rectangle([mx, y, mx + cw, y + mm(30)], outline=purple, width=2)
-        draw.rectangle([mx + mm(3), y + mm(3), mx + cw - mm(3), y + mm(27)], outline=orange, width=1)
+        draw.rectangle([mx + bw + mm(4), y, mx + cw, y + mm(36)], outline=teal, width=2)
+        draw.text((mx + bw + mm(12), y + mm(12)), caption, font=rub_f, fill=teal)
+        y += mm(44)
+        draw.rectangle([mx, y, mx + cw, y + mm(32)], outline=purple, width=2)
         draw.text((mx + mm(16), y + mm(10)), caption, font=rub_f, fill=purple)
-        y += mm(36)
+        y += mm(38)
         draw.rectangle([mx, y, mx + cw, y + mm(28)], outline=red, width=2)
-        draw.rectangle([mx, y, mx + mm(4), y + mm(28)], fill=red)
+        draw.rectangle([mx, y, mx + mm(5), y + mm(28)], fill=red)
         draw.text((mx + mm(12), y + mm(8)), caption, font=rub_f, fill=(30, 30, 30))
         y += mm(34)
-        draw.rectangle([mx, y, mx + cw, y + mm(12)], fill=purple)
+        draw.rectangle([mx, y, mx + cw, y + mm(14)], fill=purple)
         draw.text((mx + mm(8), y + mm(2)), caption, font=rub_f, fill=(255, 255, 255))
-        y += mm(18)
-        draw.rectangle([mx, y, mx + cw, y + mm(32)], outline=purple, width=1)
-        diamonds(mx + mm(10), y + mm(8), cw - mm(20), n=8)
-        draw.text((mx + mm(24), y + mm(14)), caption, font=rub_f, fill=purple)
-    else:
-        y = my + mm(6)
-        labels = [
-            "1. Волна", "2. Фестоны", "3. Меандр", "4. Ромбы", "5. Линейка",
-            "6. Розетки", "7. Уголки", "8. Лента", "9. Рамка", "10. Комбо",
-        ]
-        draw.text((mx, y), labels[0], font=small, fill=gray)
-        wave(mx, y + mm(4), cw, color=purple)
-        wave(mx, y + mm(6.5), cw, amp=mm(1.8), color=orange, width=1)
-        y += mm(12)
-        draw.text((mx, y), labels[1], font=small, fill=gray)
-        scallop(mx, y + mm(6), cw, n=10)
-        y += mm(14)
-        draw.text((mx, y), labels[2], font=small, fill=gray)
-        cell = mm(6)
-        for i in range(int(cw / cell)):
-            ox = mx + i * cell
-            draw.rectangle([ox, y + mm(3), ox + cell * 0.5, y + mm(8)], outline=purple, width=1)
-        y += mm(12)
-        draw.text((mx, y), labels[3], font=small, fill=gray)
-        diamonds(mx, y + mm(6), cw, n=10)
-        y += mm(12)
-        draw.text((mx, y), labels[4], font=small, fill=gray)
-        draw.line([mx, y + mm(4), mx + cw, y + mm(4)], fill=(0, 0, 0), width=2)
-        draw.line([mx, y + mm(6), mx + cw, y + mm(6)], fill=(0, 0, 0), width=1)
-        draw.line([mx, y + mm(7), mx + cw, y + mm(7)], fill=(0, 0, 0), width=1)
-        y += mm(12)
-        draw.text((mx, y), labels[5], font=small, fill=gray)
-        for i, rr in enumerate((10, 8, 9, 8, 9)):
-            rosette(mx + mm(18 + i * 32), y + mm(12), mm(rr))
-        y += mm(26)
-        draw.text((mx, y), labels[6], font=small, fill=gray)
-        arm = mm(5)
-        bx, by = mx, y + mm(4)
-        for a, b in (
-            ((bx, by + arm), (bx, by)), ((bx, by), (bx + arm, by)),
-            ((bx + mm(22) - arm, by), (bx + mm(22), by)),
-            ((bx + mm(22), by), (bx + mm(22), by + arm)),
-        ):
-            draw.line([*a, *b], fill=purple, width=2)
-        draw.line([mx + mm(50), y + mm(4), mx + mm(50), y + mm(24)], fill=teal, width=2)
-        for i in range(8):
+        y += mm(20)
+        draw.rectangle([mx, y, mx + cw, y + mm(30)], outline=purple, width=1)
+        for i in range(10):
             col = purple if i % 2 == 0 else rgb("OkolicaOrangeTint")
-            draw.rectangle([mx + mm(70) + i * mm(8), y + mm(8), mx + mm(78) + i * mm(8), y + mm(14)], fill=col)
-        y += mm(28)
-        draw.text((mx, y), labels[7], font=small, fill=gray)
-        draw.rectangle([mx, y + mm(4), mx + cw, y + mm(10)], fill=purple)
+            draw.rectangle([mx + mm(8) + i * mm(14), y + mm(5), mx + mm(20) + i * mm(14), y + mm(10)], fill=col)
+        draw.text((mx + mm(20), y + mm(14)), caption, font=rub_f, fill=purple)
+    else:
+        y = my + mm(4)
+        draw.rectangle([mx, y, mx + cw, y + mm(9)], fill=purple)
+        draw.rectangle([mx, y + mm(9), mx + cw, y + mm(11.5)], fill=orange)
+        draw.text((mx + mm(4), y + mm(2)), "Сибирская околица · фирменный бордюр",
+                  font=rub_f, fill=(255, 255, 255))
+        y += mm(16)
+        draw.text((mx, y), "1. Линейки", font=small, fill=gray)
+        draw.rectangle([mx, y + mm(4), mx + cw, y + mm(5.5)], fill=(0, 0, 0))
+        draw.rectangle([mx, y + mm(6.5), mx + cw, y + mm(7.2)], fill=(0, 0, 0))
+        y += mm(12)
+        draw.text((mx, y), "2. Шахматный бордюр", font=small, fill=gray)
+        for i in range(16):
+            col = purple if i % 2 == 0 else rgb("OkolicaOrangeTint")
+            draw.rectangle([mx + i * (cw / 16), y + mm(4), mx + (i + 1) * (cw / 16), y + mm(10)], fill=col)
         y += mm(14)
-        draw.text((mx, y), labels[8], font=small, fill=gray)
-        draw.rectangle([mx, y + mm(4), mx + mm(160), y + mm(32)], outline=purple, width=3)
-        wave(mx + mm(8), y + mm(8), mm(144), periods=6)
-        draw.text((mx + mm(40), y + mm(14)), caption, font=rub_f, fill=purple)
-        y += mm(38)
-        draw.text((mx, y), labels[9], font=small, fill=gray)
-        wave(mx, y + mm(5), cw, periods=5)
-        diamonds(mx, y + mm(11), cw, n=10)
-        scallop(mx, y + mm(18), cw, n=10)
+        draw.text((mx, y), "3. Цветные плашки", font=small, fill=gray)
+        cols = [purple, orange, teal, red, purple, orange, teal, red]
+        tw = cw / 8
+        for i, col in enumerate(cols):
+            draw.rectangle([mx + i * tw + 1, y + mm(4), mx + (i + 1) * tw - 1, y + mm(12)], fill=col)
+        y += mm(16)
+        draw.text((mx, y), "4. Рамка с уголками", font=small, fill=gray)
+        draw.rectangle([mx, y + mm(4), mx + cw, y + mm(26)], outline=purple, width=2)
+        draw.text((mx + mm(12), y + mm(10)), caption, font=rub_f, fill=purple)
+        y += mm(30)
+        draw.text((mx, y), "5. Три модуля", font=small, fill=gray)
+        cw3 = (cw - mm(6)) / 3
+        for i, (fill, stroke) in enumerate((
+            (rgb("OkolicaOrangeTint"), orange), (None, teal), (None, purple),
+        )):
+            x = mx + i * (cw3 + mm(3))
+            if fill:
+                draw.rectangle([x, y + mm(4), x + cw3, y + mm(30)], fill=fill, outline=stroke, width=2)
+            else:
+                draw.rectangle([x, y + mm(4), x + cw3, y + mm(30)], outline=stroke, width=2)
+            draw.text((x + mm(4), y + mm(12)), caption, font=small, fill=stroke)
+        y += mm(36)
+        draw.text((mx, y), "6. Большая врезка", font=small, fill=gray)
+        draw.rectangle([mx, y + mm(4), mx + cw, y + mm(36)], outline=purple, width=3)
+        draw.rectangle([mx + mm(8), y + mm(8), mx + cw - mm(8), y + mm(11)], fill=purple)
+        draw.text((mx + mm(16), y + mm(16)), caption, font=rub_f, fill=purple)
+        y += mm(42)
+        draw.text((mx, y), "7. Комбо-бордюр", font=small, fill=gray)
+        draw.rectangle([mx, y + mm(4), mx + cw, y + mm(7)], fill=purple)
+        draw.rectangle([mx, y + mm(7.5), mx + cw, y + mm(9)], fill=orange)
+        draw.rectangle([mx, y + mm(9.5), mx + cw, y + mm(11)], fill=teal)
+        for i in range(14):
+            col = purple if i % 2 == 0 else rgb("OkolicaOrangeTint")
+            draw.rectangle([mx + i * (cw / 14), y + mm(13), mx + (i + 1) * (cw / 14), y + mm(18)], fill=col)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(out_path, "PNG")
     return out_path
+
 
 
 def _render_gallery_preview(

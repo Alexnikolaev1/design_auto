@@ -146,7 +146,7 @@ function escapeHtml(s) {
       mode: pack.ad_format_id ? "ad" : "catalog",
       use_ai: false,
       pack_id: pack.id,
-      include: null,
+      include: pack.elements || [],
       ad_format_id: pack.ad_format_id || null,
       texts: buildTexts(pack),
       brief: document.getElementById("kitCaption")?.value || "",

@@ -223,6 +223,7 @@ def generate_kit(background_tasks: BackgroundTasks, body: KitGenerateBody = Body
         ad_format_id,
         body.source_text or "",
         body.texts_by_scene,
+        body.pack_id,
     )
     return {
         "job_id": job_id,

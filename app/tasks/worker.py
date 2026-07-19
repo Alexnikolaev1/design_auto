@@ -669,6 +669,7 @@ def process_kit_job(
     ad_format_id: str | None = None,
     source_text: str = "",
     texts_by_scene: dict | None = None,
+    pack_id: str | None = None,
 ) -> None:
     """
     CS3 Element Kit / Issue Pack / Ad format.
@@ -683,6 +684,7 @@ def process_kit_job(
     from app.kit.issue_pack import plan_issue_pack, format_media_manifest
     from app.kit.ads import get_ad_format, format_ad_rate_card
     from app.kit.cs3_guarantee import run_cs3_open_guarantee, format_open_guarantee
+    from app.kit.packs import get_pack
     from app.inx.kit_generator import build_kit_inx
     from app.layout.okolica_profile import (
         FONT_BODY, FONT_BODY_BOLD, FONT_BODY_ITALIC, FONT_HEADLINE, FONT_RUBRIC,
@@ -855,6 +857,13 @@ def process_kit_job(
             return
 
         # ---------- AD FORMAT ----------
+        pack = get_pack(pack_id) if pack_id else None
+        if pack and not include:
+            include = list(pack.elements)
+        if pack and pack.ad_format_id and not ad_format_id:
+            ad_format_id = pack.ad_format_id
+            mode = "ad"
+
         if mode == "ad" or ad_format_id:
             fmt = get_ad_format(ad_format_id or "ad_row")
             if not fmt:
@@ -866,11 +875,25 @@ def process_kit_job(
             }
             inx_bytes = build_kit_inx(
                 include=list(fmt.elements), texts=ad_texts, ad_format_id=fmt.id,
+                pack_id=pack_id,
             )
             include_ids = list(fmt.elements)
             resolved_scene = None
             compose_source = "ad_format"
-            pack_label = fmt.name
+            pack_label = (pack.action if pack else None) or fmt.name
+        elif pack is not None:
+            # ---------- DESIGNER PACK (явная кнопка) ----------
+            include_ids = list(pack.elements)
+            scene_texts = dict(texts or {})
+            if "wave_caption" not in scene_texts and brief.strip():
+                scene_texts["wave_caption"] = brief.strip()
+            inx_bytes = build_kit_inx(
+                include=include_ids, texts=scene_texts, pack_id=pack.id,
+            )
+            compose_source = "pack"
+            resolved_scene = None
+            pack_label = pack.action
+            ad_texts = scene_texts
         else:
             # ---------- SCENE / CATALOG ----------
             scene = get_scene(scene_id) if scene_id else None
@@ -911,6 +934,7 @@ def process_kit_job(
             resolved_scene = selection.get("scene_id") or scene_id
             inx_bytes = build_kit_inx(
                 include=include_ids, texts=scene_texts, scene_id=resolved_scene,
+                pack_id=pack_id,
             )
             pack_label = resolved_scene or "catalog"
             ad_texts = scene_texts
@@ -945,9 +969,11 @@ def process_kit_job(
 
         preview_path = previews / "catalog.png"
         render_kit_preview_png(
-            include_ids, ad_texts if mode == "ad" or ad_format_id else scene_texts,
+            include_ids,
+            ad_texts,
             preview_path,
-            scene_id=resolved_scene if mode != "ad" else None,
+            scene_id=resolved_scene if mode != "ad" and not pack_id else None,
+            pack_id=pack_id,
         )
 
         checklist = format_kit_checklist(
